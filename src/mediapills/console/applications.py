@@ -18,5 +18,10 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+import abc
 
-__import__("pkg_resources").declare_namespace(__name__)  # pragma: no cover
+
+class BaseApplication(metaclass=abc.ABCMeta):  # dead: disable
+    """Interface  for the container a collection of commands."""
+
+    pass

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2021 Mediapills.
+# Copyright (c) 2021-2021 MediaPills Console Authors.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -21,7 +21,8 @@
 import unittest
 
 
-class DummyTest(unittest.TestCase):
-    def test_dummy(self) -> None:
+class TestRequestsImport(unittest.TestCase):
+    def test_import_should_not_fail(self) -> None:
+        __import__("mediapills.console.outputs")
 
         self.assertTrue(True)

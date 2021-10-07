@@ -18,5 +18,11 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+import unittest
 
-__import__("pkg_resources").declare_namespace(__name__)  # pragma: no cover
+
+class TestRequestsImport(unittest.TestCase):
+    def test_import_should_not_fail(self) -> None:
+        __import__("mediapills.console.commands")
+
+        self.assertTrue(True)
