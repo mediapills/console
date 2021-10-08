@@ -18,21 +18,11 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import abc
-
-from mediapills.console.inputs import BaseInput
-from mediapills.console.outputs import BaseOutput
-
-# More info: https://tldp.org/LDP/abs/html/exitcodes.html
-SUCCESS = 0  # dead: disable
-FAILURE = 1  # dead: disable
-INVALID = 2  # dead: disable
+import unittest
 
 
-class BaseCommand(metaclass=abc.ABCMeta):
-    """Interface for all console commands."""
+class TestRequestsImport(unittest.TestCase):
+    def test_import_should_not_fail(self) -> None:
+        __import__("mediapills.console.invokers")
 
-    @abc.abstractmethod
-    def execute(self, stdin: BaseInput, stdout: BaseOutput) -> None:  # dead: disable
-        """Execute the current command."""
-        raise NotImplementedError()
+        self.assertTrue(True)
