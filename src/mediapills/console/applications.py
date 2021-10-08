@@ -19,9 +19,34 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
+import typing as t
+
+from mediapills.console.inputs import ArgumentParserAwareInput
+from mediapills.console.inputs import BaseInput
+from mediapills.console.outputs import BaseOutput
+from mediapills.console.outputs import ConsoleOutput
 
 
-class BaseApplication(metaclass=abc.ABCMeta):  # dead: disable
+class Application:  # dead: disable
     """Interface  for the container a collection of commands."""
 
-    pass
+    @abc.abstractmethod
+    def run(  # dead: disable
+        self,
+        stdin: t.Optional[BaseInput],
+        stdout: t.Optional[BaseOutput],
+        stderr: t.Optional[BaseOutput],
+        *args: t.List[t.Any],  # dead: disable
+        **kwargs: t.Dict[str, t.Any]  # dead: disable
+    ) -> None:
+        """Run the current application."""
+        if stdin is None:
+            stdin = ArgumentParserAwareInput()
+
+        if stdout is None:
+            stdout = ConsoleOutput()
+
+        if stderr is None:
+            stderr = ConsoleOutput()
+
+        raise NotImplementedError()
