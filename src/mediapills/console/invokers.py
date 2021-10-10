@@ -24,9 +24,9 @@ from mediapills.console.commands import BaseCommand
 
 
 class CommandInvoker:  # dead: disable
-    """Application Invoker abstraction.."""
+    """Command Application Invoker."""
 
-    def __init__(self) -> None:  # dead: disable
+    def __init__(self) -> None:
         """Class constructor."""
         self._command = {}  # type: t.Dict[str, BaseCommand]
 
