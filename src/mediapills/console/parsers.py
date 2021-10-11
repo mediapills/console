@@ -18,11 +18,27 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import unittest
+import abc
+from typing import List
+
+from mediapills.console.arguments import BaseArgument
 
 
-class TestRequestsImport(unittest.TestCase):
-    def test_import_should_not_fail(self) -> None:
-        __import__("mediapills.console.commands")
+class BaseArgumentsParser(  # dead: disable
+    list, metaclass=abc.ABCMeta  # type: ignore
+):
+    """Abstract class for input parser."""
 
-        self.assertTrue(True)
+    def append(self, __object: BaseArgument) -> None:
+        """Append object to the end of the list."""
+        return list.append(self, __object)
+
+    def insert(self, __index: int, __object: BaseArgument) -> None:
+        """Insert object before index."""
+        return list.insert(self, __index, __object)
+
+    def __add__(self, x: List[BaseArgument]) -> List[BaseArgument]:
+        """Return self+value."""
+        return list.__add__(self, x)
+
+    # TODO: add more magic methods

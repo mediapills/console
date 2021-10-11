@@ -20,19 +20,32 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
 
-from mediapills.console.inputs import BaseInput
-from mediapills.console.outputs import BaseOutput
 
-# More info: https://tldp.org/LDP/abs/html/exitcodes.html
-SUCCESS = 0  # dead: disable
-FAILURE = 1  # dead: disable
-INVALID = 2  # dead: disable
+class BaseArgument(metaclass=abc.ABCMeta):
+    """Argument Abstraction."""
 
+    def __init__(self, name: str, description: str = ""):
+        """Class constructor."""
+        self._name = name
+        self._description = description
 
-class BaseCommand(metaclass=abc.ABCMeta):
-    """Interface for all console commands."""
+    @property
+    def name(self) -> str:
+        """Argument name getter."""
+        return self._name
 
-    @abc.abstractmethod
-    def execute(self, stdin: BaseInput, stdout: BaseOutput) -> None:  # dead: disable
-        """Execute the current command."""
-        raise NotImplementedError()
+    @name.setter
+    def name(self, name: str) -> None:  # pragma: no cover
+        """Argument name setter."""
+        # TODO: Add argument name validator IEEE Std 1003.1-2017
+        self._name = name
+
+    @property
+    def description(self) -> str:
+        """Argument description getter."""
+        return self._description
+
+    @description.setter
+    def description(self, description: str) -> None:  # pragma: no cover
+        """Argument description setter."""
+        self._description = description

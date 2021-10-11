@@ -18,27 +18,11 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import typing as t
-
-from mediapills.console.arguments.commands import InputCommand
+import unittest
 
 
-class CommandInvoker:  # dead: disable
-    """Command Application Invoker."""
+class TestRequestsImport(unittest.TestCase):
+    def test_import_should_not_fail(self) -> None:
+        __import__("mediapills.console.arguments.commands")
 
-    def __init__(self) -> None:
-        """Class constructor."""
-        self._command = {}  # type: t.Dict[str, InputCommand]
-
-    def register(self, name: str, command: InputCommand) -> None:  # dead: disable
-        """Register a new command."""
-        # TODO: already exists
-        self._command[name] = command
-
-    def has_command(self, name: str) -> bool:  # dead: disable
-        """Return true if an command object by name exists."""
-        return name in self._command
-
-    def execute(self, name: str) -> None:  # dead: disable
-        """Execute the command by name."""
-        raise NotImplementedError()
+        self.assertTrue(True)

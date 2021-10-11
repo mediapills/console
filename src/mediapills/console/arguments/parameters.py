@@ -18,67 +18,47 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import abc
 import typing as t
 
-REQUIRED = 2 ** 0
-OPTIONAL = 2 ** 1
-IS_ARRAY = 2 ** 2
-
-ERR_MSG_INVALID_MODE = 'Argument mode "{mode}" is not valid.'
-ERR_MSG_MODE_CONSTRAINT = (
-    "Argument mode can not be OPTIONAL and REQUIRED simultaneously."
-)
-ERR_MSG_DEFAULT_ASSIGNMENT = "Cannot set a default value except for OPTIONAL mode."
-ERR_MSG_DEFAULT_ARRAY_VALUE = "A default value for an array argument must be an list."
-ERR_MSG_DEFAULT_VALUE_TYPE = "A default value should be 'int' or 'str' type."
+from mediapills.console import arguments
 
 TYPE_DEFAULT = t.Optional[t.Union[str, int, t.List[t.Union[str, int]]]]
 
 
-class BaseArgument(metaclass=abc.ABCMeta):
-    """Argument Abstract class."""
+class InputParameter(arguments.BaseArgument):
+    """Input Argument Parameter implementation."""
 
-    def __init__(self, name: str, description: str = ""):
-        """Class constructor."""
-        self._name = name
-        self._description = description
+    """A value must be passed when the option is used (e.g. --iterations=5 or -i5)."""
+    VALUE_REQUIRED = 1  # 2 ** 0
 
-    @property
-    def name(self) -> str:
-        """Argument name getter."""
-        return self._name
+    """The option may or may not have a value (e.g. --yell or --yell=loud)."""
+    VALUE_OPTIONAL = 2  # 2 ** 1
 
-    @name.setter
-    def name(self, name: str) -> None:  # pragma: no cover
-        """Argument name setter."""
-        # TODO: Add argument name validator IEEE Std 1003.1-2017
-        self._name = name
+    """The option accepts multiple values (e.g. --dir=/foo --dir=/bar)."""
+    VALUE_IS_ARRAY = 4  # 2 ** 2
 
-    @property
-    def description(self) -> str:
-        """Argument description getter."""
-        return self._description
-
-    @description.setter
-    def description(self, description: str) -> None:  # pragma: no cover
-        """Argument description setter."""
-        self._description = description
-
-
-class InputArgument(BaseArgument):  # dead: disable
-    """Input Argument implementation."""
+    ERR_MSG_INVALID_MODE = 'Argument mode "{mode}" is not valid.'
+    ERR_MSG_MODE_CONSTRAINT = (
+        "Argument mode can not be VALUE_OPTIONAL and VALUE_REQUIRED simultaneously."
+    )
+    ERR_MSG_DEFAULT_ASSIGNMENT = (
+        "Cannot set a default value except for VALUE_OPTIONAL mode."
+    )
+    ERR_MSG_DEFAULT_ARRAY_VALUE = (
+        "A default value for an array argument must be an list."
+    )
+    ERR_MSG_DEFAULT_VALUE_TYPE = "A default value should be 'int' or 'str' type."
 
     def __init__(
         self,
         name: str,
-        mode: int = OPTIONAL,
+        mode: int = VALUE_OPTIONAL,
         description: str = "",
         default: t.Optional[t.Any] = None,
     ):
         """Class constructor."""
         super().__init__(name=name, description=description)
-        self._mode = OPTIONAL
+        self._mode = self.VALUE_OPTIONAL
         self._default = None
         self.mode = mode
         self.default = default
@@ -92,24 +72,24 @@ class InputArgument(BaseArgument):  # dead: disable
     def mode(self, mode: int) -> None:
         """Argument mode setter."""
         if mode > 7 or mode < 1:
-            raise ValueError(ERR_MSG_INVALID_MODE.format(mode=mode))
+            raise ValueError(self.ERR_MSG_INVALID_MODE.format(mode=mode))
 
-        if mode & OPTIONAL and mode & REQUIRED:
-            raise ValueError(ERR_MSG_MODE_CONSTRAINT)
+        if mode & self.VALUE_OPTIONAL and mode & self.VALUE_REQUIRED:
+            raise ValueError(self.ERR_MSG_MODE_CONSTRAINT)
 
         self._mode = mode
 
     def is_optional(self) -> bool:  # dead: disable
-        """Return True if an argument is optional."""
-        return self._mode & OPTIONAL > 0
+        """Return True if an argument is VALUE_OPTIONAL."""
+        return self._mode & self.VALUE_OPTIONAL > 0
 
     def is_required(self) -> bool:  # dead: disable
-        """Return True if an argument is required."""
-        return self._mode & REQUIRED > 0
+        """Return True if an argument is VALUE_REQUIRED."""
+        return self._mode & self.VALUE_REQUIRED > 0
 
     def is_array(self) -> bool:
         """Return True if an argument is array type."""
-        return self._mode & IS_ARRAY > 0
+        return self._mode & self.VALUE_IS_ARRAY > 0
 
     @property
     def default(self) -> TYPE_DEFAULT:
@@ -119,17 +99,17 @@ class InputArgument(BaseArgument):  # dead: disable
     @default.setter
     def default(self, default: TYPE_DEFAULT = None) -> None:
         """Argument default value setter."""
-        if self.mode & REQUIRED > 0 and default is not None:
-            raise ValueError(ERR_MSG_DEFAULT_ASSIGNMENT)
+        if self.mode & self.VALUE_REQUIRED > 0 and default is not None:
+            raise ValueError(self.ERR_MSG_DEFAULT_ASSIGNMENT)
 
         if self.is_array():
             if default is None:
                 self._default = []
             elif not isinstance(default, list):
-                raise ValueError(ERR_MSG_DEFAULT_ARRAY_VALUE)
+                raise ValueError(self.ERR_MSG_DEFAULT_ARRAY_VALUE)
         elif default is None:
             pass
-        elif not isinstance(default, (str, int)) or isinstance(default, (bool)):
-            raise ValueError(ERR_MSG_DEFAULT_VALUE_TYPE)
+        elif not isinstance(default, (str, int)) or isinstance(default, bool):
+            raise ValueError(self.ERR_MSG_DEFAULT_VALUE_TYPE)
 
         self._default = default
