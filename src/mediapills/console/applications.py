@@ -18,35 +18,110 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import abc
 import typing as t
 
-from mediapills.console.inputs import ArgumentParserAwareInput
-from mediapills.console.inputs import BaseInput
-from mediapills.console.outputs import BaseOutput
-from mediapills.console.outputs import ConsoleOutput
+from mediapills.console.arguments import InputCommand
+from mediapills.console.arguments import InputOption
+from mediapills.console.arguments import InputParameter
+from mediapills.console.base.applications import BaseApplication
+from mediapills.console.base.outputs import BaseOutput
+from mediapills.console.inputs import ConsoleInput
+from mediapills.console.parsers import InputArgumentsParser
 
 
-class Application:  # dead: disable
-    """Interface  for the container a collection of commands."""
+def option(*args: t.Any, **kwargs: t.Any) -> InputOption:
+    """Object InputOption builder."""
+    return InputOption(*args, **kwargs)
 
-    @abc.abstractmethod
-    def run(  # dead: disable
+
+def parameter(*args: t.Any, **kwargs: t.Any) -> InputParameter:  # dead: disable
+    """Object InputParameter builder."""
+    return InputParameter(*args, **kwargs)
+
+
+class Application(BaseApplication):  # type: ignore  # dead: disable
+    """Collection of commands container facade."""
+
+    __slots__ = ["_entrypoint"]
+
+    def __init__(
         self,
-        stdin: t.Optional[BaseInput],
         stdout: t.Optional[BaseOutput],
         stderr: t.Optional[BaseOutput],
-        *args: t.List[t.Any],  # dead: disable
-        **kwargs: t.Dict[str, t.Any]  # dead: disable
-    ) -> None:
-        """Run the current application."""
-        if stdin is None:
-            stdin = ArgumentParserAwareInput()
+        description: str = "",
+        version: str = "",
+    ):
+        """Class constructor."""
+        super().__init__(
+            stdout=stdout, stderr=stderr, description=description, version=version,
+        )
+        self._parser: t.Optional[InputArgumentsParser] = None
+        """
+        Verbosity levels:
+        -v: Show informational messages that highlight the progress of the application at
+        coarse-grained level.
+        -vv: Show fine-grained informational events that are most useful to debug an
+        application.
+        -vvv: Show finer-grained informational events that include tracing.
+        """
+        self._options: t.List[InputOption] = []
+        self.__build_default_options()
 
-        if stdout is None:
-            stdout = ConsoleOutput()
+    def __build_default_options(self) -> None:
+        self._options.append(option("-V", "--version", "Show version number and quit."))
+        self._options.append(
+            option(
+                "-q",
+                "--quiet",
+                "Silent or quiet mode. Don't show progress meter or error messages.",
+            )
+        )
+        self._options.append(
+            option(
+                "-vvv", "Verbosity level can be controlled globally for all commands."
+            )
+        )
 
-        if stderr is None:
-            stderr = ConsoleOutput()
+    @property
+    def parser(self) -> InputArgumentsParser:
+        """Application input parser."""
+        if self._parser is None:
+            self._parser = InputArgumentsParser(
+                arguments=[*self.parameters, *self.options, *self.commands]
+            )
+        return self._parser
 
+    @property
+    def options(self) -> t.List[InputOption]:
+        """Application options getter."""
+        return self._options
+
+    @property
+    def parameters(self) -> t.List[InputParameter]:
+        """Application parameters getter"""
+        return []
+
+    @property
+    def commands(self) -> t.List[InputCommand]:
+        """Application commands getter"""
+        return []
+
+    def run(self) -> None:  # dead: disable
+        """Run the current application command."""
+        stdin = ConsoleInput(parser=self.parser)
+        stdin.validate()
+
+        # self._entrypoint.execute(stdin=self.stdin, stdout=self.stdout)
+
+    def show_version(self) -> None:  # dead: disable
+        """Show application version."""
+        # {prog}/{version} Python/{python version} {OS}/{OS version}
+        # {mediapills.console}/{version}
+        # return self._version
+        pass
+
+    def command(self, name: str) -> None:
+        """Decorate a view function to register command in application."""
+        # TODO: implement
+        # TODO: reset stdin
         raise NotImplementedError()

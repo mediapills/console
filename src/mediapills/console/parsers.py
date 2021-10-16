@@ -19,26 +19,54 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
+from argparse import ArgumentParser
+from typing import Dict
 from typing import List
+from typing import Optional
+from typing import Tuple
 
-from mediapills.console.arguments import BaseArgument
+from mediapills.console.base.arguments import BaseArgument
 
 
-class BaseArgumentsParser(  # dead: disable
-    list, metaclass=abc.ABCMeta  # type: ignore
-):
+class InputParser(metaclass=abc.ABCMeta):
     """Abstract class for input parser."""
 
-    def append(self, __object: BaseArgument) -> None:
-        """Append object to the end of the list."""
-        return list.append(self, __object)
+    @abc.abstractmethod
+    def parse(self) -> Tuple[Dict[str, str], List[str]]:
+        """Return parsing result."""
+        raise NotImplementedError
 
-    def insert(self, __index: int, __object: BaseArgument) -> None:
-        """Insert object before index."""
-        return list.insert(self, __index, __object)
+    @abc.abstractmethod
+    def print(self) -> None:
+        """Print a help message, including the program usage and registered arguments."""
+        raise NotImplementedError
 
-    def __add__(self, x: List[BaseArgument]) -> List[BaseArgument]:
-        """Return self+value."""
-        return list.__add__(self, x)
 
-    # TODO: add more magic methods
+class InputArgumentsParser(InputParser):
+    """CLI arguments parser."""
+
+    def __init__(
+        self, arguments: List[BaseArgument], description: Optional[str] = ""
+    ) -> None:
+        """Class constructor."""
+        self._arguments = arguments
+        self._description = description
+        self._parser: Optional[ArgumentParser] = None
+
+    @property
+    def arguments(self) -> List[BaseArgument]:
+        """Arguments getter."""
+        return self._arguments
+
+    def parser(self) -> ArgumentParser:  # dead: disable
+        """Built-in Argument parser getter."""
+        # iterate via arguments
+        raise NotImplementedError()
+
+    def parse(self) -> Tuple[Dict[str, str], List[str]]:  # dead: disable
+        """Return parsing result."""
+        return {}, []
+
+    def print(self) -> None:  # dead: disable
+        """Print a help message, including the program usage and registered arguments."""
+        raise NotImplementedError

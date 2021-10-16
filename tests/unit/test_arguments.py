@@ -23,14 +23,14 @@ from typing import Any
 
 from parameterized import parameterized
 
-from mediapills.console.arguments.parameters import InputParameter
+from mediapills.console.arguments import InputParameter
 
 
 class TestInputParameter(unittest.TestCase):
     def test_default_should_be_valid(self) -> None:
-        obj = InputParameter(name="test")
+        obj = InputParameter("test")
 
-        self.assertEqual("test", obj.name)
+        self.assertEqual(["test"], obj.options)
         self.assertEqual("", obj.description)
         self.assertIsNone(obj.default)
         self.assertFalse(obj.is_array())
@@ -38,7 +38,7 @@ class TestInputParameter(unittest.TestCase):
         self.assertFalse(obj.is_required())
 
     def test_required_should_be_required_only(self) -> None:
-        obj = InputParameter(name="test", mode=InputParameter.VALUE_REQUIRED)
+        obj = InputParameter("test", mode=InputParameter.VALUE_REQUIRED)
 
         self.assertFalse(obj.is_array())
         self.assertFalse(obj.is_optional())
@@ -46,8 +46,7 @@ class TestInputParameter(unittest.TestCase):
 
     def test_required_array_should_be_required_and_array(self) -> None:
         obj = InputParameter(
-            name="test",
-            mode=InputParameter.VALUE_REQUIRED | InputParameter.VALUE_IS_ARRAY,
+            "test", mode=InputParameter.VALUE_REQUIRED | InputParameter.VALUE_IS_ARRAY,
         )
 
         self.assertTrue(obj.is_array())
@@ -55,7 +54,7 @@ class TestInputParameter(unittest.TestCase):
         self.assertTrue(obj.is_required())
 
     def test_optional_should_be_optional_only(self) -> None:
-        obj = InputParameter(name="test", mode=InputParameter.VALUE_OPTIONAL)
+        obj = InputParameter("test", mode=InputParameter.VALUE_OPTIONAL)
 
         self.assertFalse(obj.is_array())
         self.assertTrue(obj.is_optional())
@@ -63,8 +62,7 @@ class TestInputParameter(unittest.TestCase):
 
     def test_optional_array_should_be_optional_and_array(self) -> None:
         obj = InputParameter(
-            name="test",
-            mode=InputParameter.VALUE_OPTIONAL | InputParameter.VALUE_IS_ARRAY,
+            "test", mode=InputParameter.VALUE_OPTIONAL | InputParameter.VALUE_IS_ARRAY,
         )
 
         self.assertTrue(obj.is_array())
@@ -74,25 +72,21 @@ class TestInputParameter(unittest.TestCase):
     def test_required_optional_should_raise_error(self) -> None:
         with self.assertRaises(expected_exception=ValueError):
             InputParameter(
-                name="test",
+                "test",
                 mode=InputParameter.VALUE_REQUIRED | InputParameter.VALUE_OPTIONAL,
             )
 
     def test_invalid_mode_should_raise_error(self) -> None:
         with self.assertRaises(expected_exception=ValueError):
-            InputParameter(name="test", mode=2 ** 3)
+            InputParameter("test", mode=2 ** 3)
 
     def test_required_default_not_none_should_raise_error(self) -> None:
         with self.assertRaises(expected_exception=ValueError):
-            InputParameter(
-                name="test", mode=InputParameter.VALUE_REQUIRED, default="value"
-            )
+            InputParameter("test", mode=InputParameter.VALUE_REQUIRED, default="value")
 
     def test_array_default_should_be_valid(self) -> None:
         with self.assertRaises(expected_exception=ValueError):
-            InputParameter(
-                name="test", mode=InputParameter.VALUE_IS_ARRAY, default="value"
-            )
+            InputParameter("test", mode=InputParameter.VALUE_IS_ARRAY, default="value")
 
     @parameterized.expand(  # type: ignore
         [
@@ -109,4 +103,4 @@ class TestInputParameter(unittest.TestCase):
     )
     def test_default_type_should_be_valid(self, default: Any) -> None:
         with self.assertRaises(expected_exception=ValueError):
-            InputParameter(name="test", default=default)
+            InputParameter("test", default=default)

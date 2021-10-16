@@ -18,14 +18,27 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import typing as t
+from typing import Any
+from typing import List
+from typing import Optional
+from typing import Union
 
-from mediapills.console import arguments
+from mediapills.console.base.arguments import BaseArgument
+from mediapills.console.base.inputs import BaseInput
+from mediapills.console.base.outputs import BaseOutput
 
-TYPE_DEFAULT = t.Optional[t.Union[str, int, t.List[t.Union[str, int]]]]
+TYPE_DEFAULT = Optional[Union[str, int, List[Union[str, int]]]]
 
 
-class InputParameter(arguments.BaseArgument):
+class InputOption(BaseArgument):  # type: ignore
+    """Input Argument Option implementation."""
+
+    pass
+
+    # TODO add aliases setter and getter
+
+
+class InputParameter(BaseArgument):  # type: ignore
     """Input Argument Parameter implementation."""
 
     """A value must be passed when the option is used (e.g. --iterations=5 or -i5)."""
@@ -38,28 +51,35 @@ class InputParameter(arguments.BaseArgument):
     VALUE_IS_ARRAY = 4  # 2 ** 2
 
     ERR_MSG_INVALID_MODE = 'Argument mode "{mode}" is not valid.'
+
     ERR_MSG_MODE_CONSTRAINT = (
         "Argument mode can not be VALUE_OPTIONAL and VALUE_REQUIRED simultaneously."
     )
+
     ERR_MSG_DEFAULT_ASSIGNMENT = (
         "Cannot set a default value except for VALUE_OPTIONAL mode."
     )
+
     ERR_MSG_DEFAULT_ARRAY_VALUE = (
         "A default value for an array argument must be an list."
     )
+
     ERR_MSG_DEFAULT_VALUE_TYPE = "A default value should be 'int' or 'str' type."
 
-    def __init__(
-        self,
-        name: str,
-        mode: int = VALUE_OPTIONAL,
-        description: str = "",
-        default: t.Optional[t.Any] = None,
-    ):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Class constructor."""
-        super().__init__(name=name, description=description)
+        super().__init__(*args, description=kwargs.get("description", ""))
         self._mode = self.VALUE_OPTIONAL
         self._default = None
+        self.__construct(**kwargs)
+
+    def __construct(
+        self,
+        mode: int = VALUE_OPTIONAL,
+        default: Optional[Any] = None,
+        description: str = "",  # dead: disable
+    ) -> None:
+        """Class strict constructor."""
         self.mode = mode
         self.default = default
 
@@ -113,3 +133,67 @@ class InputParameter(arguments.BaseArgument):
             raise ValueError(self.ERR_MSG_DEFAULT_VALUE_TYPE)
 
         self._default = default
+
+
+class InputCommand(BaseArgument):  # type: ignore
+    """Interface for all console commands."""
+
+    # More info: https://tldp.org/LDP/abs/html/exitcodes.html
+    """No error. The script executed successfully."""
+    SUCCESS = 0  # dead: disable
+
+    """Catchall for general errors."""
+    FAILURE = 1  # dead: disable
+
+    """Misuse of shell builtins (according to Bash documentation)."""
+    INVALID = 2  # dead: disable
+
+    def __init__(self, description: str = "", *args: Any) -> None:
+        """Class constructor."""
+        super().__init__(description=description, *args)
+        self._options = []  # type: List[InputOption]
+        self._parameters = []  # type: List[InputParameter]
+
+    @property
+    def options(self) -> List[InputOption]:
+        """Command options getter"""
+        return self._options
+
+    @property
+    def parameters(self) -> List[InputParameter]:
+        """Command parameters getter"""
+        return self._parameters
+
+    def execute(self, stdin: BaseInput, stdout: BaseOutput) -> int:  # dead: disable
+        """Execute the current command."""
+        raise NotImplementedError()
+
+
+class CommandDispatcher(InputCommand):  # dead: disable
+    """Decouple the implementation of a command from its commander."""
+
+    def __init__(self, description: str = "", *args: Any) -> None:
+        """Class constructor."""
+        super().__init__(description=description, *args)
+        self._commands = []  # type: List[InputCommand]
+
+    def register_handler(self, handler: InputCommand) -> None:  # dead: disable
+        """Add the new handler to the list."""
+        pass
+
+    def remove_handler(self, name: str) -> None:  # dead: disable
+        """Remove handler from the list."""
+        pass
+
+    @property
+    def commands(self) -> List[InputCommand]:
+        """Command sub-commands getter"""
+        return self._commands
+
+    def execute(self, stdin: BaseInput, stdout: BaseOutput) -> int:  # dead: disable
+        """Execute the current command."""
+        raise NotImplementedError()
+
+    def has_command(self, name: str) -> bool:  # dead: disable
+        """Return true if an command exists by name."""
+        raise NotImplementedError()

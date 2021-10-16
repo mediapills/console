@@ -18,56 +18,47 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import typing as t
+import abc
+from typing import List
+from typing import Optional
 
-from mediapills.console.base.inputs import BaseConsoleInput
-from mediapills.console.parsers import InputParser
 
-
-class ConsoleInput(BaseConsoleInput):  # type: ignore
-    """Command argument parser based on argparse."""
-
-    def __init__(self, parser: InputParser):
-        """Class constructor."""
-        self._parser = parser
+class BaseInput(metaclass=abc.ABCMeta):
+    """Interface for all console commands."""
 
     @property
-    def parser(self) -> InputParser:
-        """Input parser getter."""
-        return self._parser
-
-    @parser.setter
-    def parser(self, parser: InputParser) -> None:
-        """Input parser setter."""
-        self._parser = parser
-
-    @property
-    def command(self) -> t.Optional[str]:
+    @abc.abstractmethod
+    def command(self) -> Optional[str]:
         """Return the first argument from the raw parameters (not parsed)."""
-        args = self.get_args()
-        return None if len(args) == 0 else args[0]
+        raise NotImplementedError()
 
-    def get_arg(self, name: str) -> t.Optional[str]:  # dead: disable
+    @abc.abstractmethod
+    def get_arg(self, name: str) -> Optional[str]:
         """Return the argument value for a given argument name."""
-        # TODO: implement this method
         raise NotImplementedError()
 
-    def has_arg(self, name: str) -> t.Optional[str]:  # dead: disable
+    @abc.abstractmethod
+    def has_arg(self, name: str) -> Optional[str]:
         """Return true if an InputParameter object exists by name or position."""
-        # TODO: implement this method
         raise NotImplementedError()
 
-    def get_args(self) -> t.List[str]:  # dead: disable
+    @abc.abstractmethod
+    def get_args(self) -> List[str]:
         """Return all the given arguments merged with the default values."""
-        # parser = ArgumentParser()
-        # _, args = parser.parse_known_args()
-
-        return []
-
-    def bind(self) -> t.Dict[str, str]:
-        """Binds the current Input instance with the given arguments."""
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def bind(self) -> None:
+        """Binds the current Input instance with the given arguments and options."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def validate(self) -> None:
         """Validate arguments."""
         raise NotImplementedError()
+
+
+class BaseConsoleInput(BaseInput, metaclass=abc.ABCMeta):
+    """Input is the base class for all concrete Input classes."""
+
+    pass

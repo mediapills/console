@@ -19,10 +19,13 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import unittest
+from unittest.mock import Mock
+
+from mediapills.console.applications import Application
 
 
-class TestRequestsImport(unittest.TestCase):
-    def test_import_should_not_fail(self) -> None:
-        __import__("mediapills.console.applications")
-
-        self.assertTrue(True)
+class TestApplication(unittest.TestCase):
+    def test_default_verbosity_level_should_be_normal(self) -> None:
+        app = Application(stdout=Mock(), stderr=Mock())
+        with self.assertRaises(expected_exception=NotImplementedError):
+            app.run()
