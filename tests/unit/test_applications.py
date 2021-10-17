@@ -20,11 +20,13 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import unittest
 from unittest.mock import Mock
+from unittest.mock import patch
 
 from mediapills.console.applications import Application
 
 
 class TestApplication(unittest.TestCase):
+    @patch("sys.argv", ["script_name"])
     def test_default_verbosity_level_should_be_normal(self) -> None:
         app = Application(stdout=Mock(), stderr=Mock())
         with self.assertRaises(expected_exception=NotImplementedError):

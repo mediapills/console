@@ -21,7 +21,7 @@
 import abc
 
 VERBOSITY_QUIET = 2 ** 3
-VERBOSITY_NORMAL = 2 ** 4  # dead: disable
+VERBOSITY_NORMAL = 2 ** 4
 VERBOSITY_VERBOSE = 2 ** 5
 VERBOSITY_VERY_VERBOSE = 2 ** 6
 VERBOSITY_DEBUG = 2 ** 7
@@ -32,9 +32,9 @@ OUTPUT_PLAIN = 2 ** 2  # dead: disable
 
 
 class BaseOutput(metaclass=abc.ABCMeta):
-    """Interface for all console commands."""
+    """Abstract Base Class for all Output classes."""
 
-    def __init__(self, verbosity: int = 0):
+    def __init__(self, verbosity: int = VERBOSITY_NORMAL):
         """Class constructor."""
         self._verbosity = verbosity
 
@@ -75,8 +75,6 @@ class BaseOutput(metaclass=abc.ABCMeta):
 
 
 class BaseConsoleOutput(BaseOutput, metaclass=abc.ABCMeta):
-    """ConsoleOutputInterface is the interface implemented by ConsoleOutput class.
-    This adds information about stderr and section output stream.
-    """
+    """Abstract Base Class for all Console Output classes."""
 
     pass

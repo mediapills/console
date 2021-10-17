@@ -19,25 +19,27 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
+import io
+import sys
+import typing as t
 from argparse import ArgumentParser
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+from argparse import SUPPRESS
 
-from mediapills.console.base.arguments import BaseArgument
+from mediapills.console.abc.arguments import BaseArgument
+
+ParserResult = t.Tuple[t.Dict[str, str], t.List[str]]
 
 
 class InputParser(metaclass=abc.ABCMeta):
     """Abstract class for input parser."""
 
     @abc.abstractmethod
-    def parse(self) -> Tuple[Dict[str, str], List[str]]:
+    def parse(self, argv: t.List[str]) -> ParserResult:
         """Return parsing result."""
         raise NotImplementedError
 
     @abc.abstractmethod
-    def print(self) -> None:
+    def help(self) -> str:
         """Print a help message, including the program usage and registered arguments."""
         raise NotImplementedError
 
@@ -46,27 +48,78 @@ class InputArgumentsParser(InputParser):
     """CLI arguments parser."""
 
     def __init__(
-        self, arguments: List[BaseArgument], description: Optional[str] = ""
+        self, arguments: t.List[BaseArgument], description: str = "", epilog: str = "",
     ) -> None:
         """Class constructor."""
-        self._arguments = arguments
-        self._description = description
-        self._parser: Optional[ArgumentParser] = None
+        self._args = arguments
+        self._desc = description
+        self._epilog = epilog
+        self._parser = self.build_parser(
+            self.arguments, desc=self.description, epilog=self.epilog
+        )
+
+    @classmethod
+    def build_parser(
+        cls,
+        args: t.List[BaseArgument],
+        desc: t.Optional[str] = "",
+        epilog: t.Optional[str] = "",
+    ) -> ArgumentParser:
+        """Parser builder"""
+        parser = ArgumentParser(
+            prog=sys.argv[0], description=desc, epilog=epilog, add_help=False
+        )
+        parser = cls.extend_parser(parser=parser, args=args)
+        return parser
+
+    @staticmethod
+    def extend_parser(
+        parser: ArgumentParser, args: t.List[BaseArgument],
+    ) -> ArgumentParser:
+        """Extend parser."""
+        for arg in args:
+            is_dispatcher = callable(getattr(arg, "commands", None))
+            is_parameter = callable(getattr(arg, "default", None))
+
+            if is_dispatcher:
+                pass  # TODO: implement CommandDispatcher sub-parser
+            elif is_parameter:
+                parser.add_argument(*arg.options, nargs=1)
+            else:
+                parser.add_argument(
+                    *arg.options, action="count", default=SUPPRESS, help=arg.description
+                )
+
+        return parser
 
     @property
-    def arguments(self) -> List[BaseArgument]:
-        """Arguments getter."""
-        return self._arguments
+    def arguments(self) -> t.List[BaseArgument]:
+        """Parser arguments getter."""
+        return self._args
 
-    def parser(self) -> ArgumentParser:  # dead: disable
+    @property
+    def description(self) -> str:
+        """Parser description getter."""
+        return self._desc
+
+    @property
+    def epilog(self) -> str:
+        """Parser epilog getter."""
+        return self._epilog
+
+    @property
+    def parser(self) -> ArgumentParser:
         """Built-in Argument parser getter."""
-        # iterate via arguments
-        raise NotImplementedError()
+        return self._parser
 
-    def parse(self) -> Tuple[Dict[str, str], List[str]]:  # dead: disable
+    def parse(self, argv: t.List[str]) -> t.Tuple[t.Dict[str, str], t.List[str]]:
         """Return parsing result."""
-        return {}, []
+        args, undef = self.parser.parse_known_args(argv)
+        # handle options
+        return vars(args), undef
 
-    def print(self) -> None:  # dead: disable
+    def help(self) -> str:
         """Print a help message, including the program usage and registered arguments."""
-        raise NotImplementedError
+        output = io.StringIO()
+        self.parser.print_help(file=output)
+        return output.getvalue()

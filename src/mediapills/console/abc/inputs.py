@@ -24,7 +24,7 @@ from typing import Optional
 
 
 class BaseInput(metaclass=abc.ABCMeta):
-    """Interface for all console commands."""
+    """Abstract Base Class for all Input classes."""
 
     @property
     @abc.abstractmethod
@@ -49,7 +49,9 @@ class BaseInput(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def bind(self) -> None:
-        """Binds the current Input instance with the given arguments and options."""
+        """Print a help message, including the program usage and information about the
+        arguments.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -59,6 +61,6 @@ class BaseInput(metaclass=abc.ABCMeta):
 
 
 class BaseConsoleInput(BaseInput, metaclass=abc.ABCMeta):
-    """Input is the base class for all concrete Input classes."""
+    """Abstract Base Class for all Console Input classes."""
 
     pass

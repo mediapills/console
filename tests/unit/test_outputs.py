@@ -21,7 +21,7 @@
 import unittest
 
 
-class TestRequestsImport(unittest.TestCase):
+class TestConsoleOutput(unittest.TestCase):
     def test_import_should_not_fail(self) -> None:
         __import__("mediapills.console.outputs")
 

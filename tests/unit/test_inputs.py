@@ -18,15 +18,10 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-# import argparse
 import unittest
-from unittest.mock import patch
-
-# from mediapills.console.inputs import ConsoleInput
 
 
-class TestArgumentParserAwareInput(unittest.TestCase):
-    @patch("sys.argv", ["prog"])
+class TestConsoleInput(unittest.TestCase):
     def test_command_should_have_no_args(self) -> None:
         __import__("mediapills.console.inputs")
 

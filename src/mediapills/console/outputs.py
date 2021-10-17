@@ -18,15 +18,13 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-from mediapills.console.base.outputs import BaseConsoleOutput
+from mediapills.console.abc.outputs import BaseConsoleOutput
 
 
 class ConsoleOutput(BaseConsoleOutput):  # type: ignore  # dead: disable
     """Default class for all CLI output. It uses STDOUT and STDERR."""
 
-    def write(  # dead: disable
-        self, msg: str, newline: bool = False, options: int = 0
-    ) -> None:
+    def write(self, msg: str, newline: bool = False, options: int = 0) -> None:
         """Write a message to the output."""
         # TODO: needs to be implemented
         raise NotImplementedError()

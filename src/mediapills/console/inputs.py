@@ -18,9 +18,11 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+import sys
 import typing as t
 
-from mediapills.console.base.inputs import BaseConsoleInput
+from mediapills.console.abc.inputs import BaseConsoleInput
+from mediapills.console.exceptions import ConsoleUnrecognizedArgumentsException
 from mediapills.console.parsers import InputParser
 
 
@@ -64,10 +66,19 @@ class ConsoleInput(BaseConsoleInput):  # type: ignore
 
         return []
 
+    @staticmethod
+    def get_argv() -> t.List[str]:
+        """Get console arguments list"""
+        argv = sys.argv
+        argv.pop()
+        return argv
+
     def bind(self) -> t.Dict[str, str]:
         """Binds the current Input instance with the given arguments."""
         raise NotImplementedError()
 
     def validate(self) -> None:
         """Validate arguments."""
-        raise NotImplementedError()
+        args, undef = self.parser.parse(self.get_argv())
+        if undef:
+            raise ConsoleUnrecognizedArgumentsException(undef[0])

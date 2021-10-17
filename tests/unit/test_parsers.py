@@ -19,10 +19,36 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import unittest
+from unittest.mock import Mock
+
+from mediapills.console.parsers import InputArgumentsParser
 
 
-class TestRequestsImport(unittest.TestCase):
-    def test_import_should_not_fail(self) -> None:
-        __import__("mediapills.console.parsers")
+class TestInputArgumentsParser(unittest.TestCase):
+    def test_parse_should_be_empty(self) -> None:
+        parser = InputArgumentsParser([], description="Description goes here ...")
+        args, undef = parser.parse([])
+        self.assertDictEqual({}, args)
+        self.assertListEqual([], undef)
 
-        self.assertTrue(True)
+    def test_print_should_show_base(self) -> None:
+        parser = InputArgumentsParser([], description="Description goes here ...")
+        msg = parser.help()
+        self.assertRegex(msg, ".*Description goes here \\.\\.\\..*")
+
+    def test_parse_option_should_be_valid(self) -> None:
+        parser = InputArgumentsParser(
+            [
+                Mock(
+                    commands=None,
+                    default=None,
+                    options=["-m", "-mm", "-mmm"],
+                    description="Argument description goes here ...",
+                )
+            ],
+            description="Description goes here ...",
+        )
+
+        args, undef = parser.parse(["-m", "undef"])
+        self.assertListEqual(["m"], [*args.keys()])
+        self.assertListEqual(["undef"], undef)

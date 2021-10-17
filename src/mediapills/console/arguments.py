@@ -23,9 +23,9 @@ from typing import List
 from typing import Optional
 from typing import Union
 
-from mediapills.console.base.arguments import BaseArgument
-from mediapills.console.base.inputs import BaseInput
-from mediapills.console.base.outputs import BaseOutput
+from mediapills.console.abc.arguments import BaseArgument
+from mediapills.console.abc.inputs import BaseInput
+from mediapills.console.abc.outputs import BaseOutput
 
 TYPE_DEFAULT = Optional[Union[str, int, List[Union[str, int]]]]
 
@@ -70,7 +70,7 @@ class InputParameter(BaseArgument):  # type: ignore
         """Class constructor."""
         super().__init__(*args, description=kwargs.get("description", ""))
         self._mode = self.VALUE_OPTIONAL
-        self._default = None
+        self._default: TYPE_DEFAULT = None
         self.__construct(**kwargs)
 
     def __construct(
@@ -174,7 +174,7 @@ class CommandDispatcher(InputCommand):  # dead: disable
 
     def __init__(self, description: str = "", *args: Any) -> None:
         """Class constructor."""
-        super().__init__(description=description, *args)
+        super().__init__(description=description, *args)  # type: ignore
         self._commands = []  # type: List[InputCommand]
 
     def register_handler(self, handler: InputCommand) -> None:  # dead: disable

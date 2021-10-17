@@ -18,13 +18,15 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+import abc
 import typing as t
+from typing import Optional
 
+from mediapills.console.abc.outputs import BaseOutput
 from mediapills.console.arguments import InputCommand
 from mediapills.console.arguments import InputOption
 from mediapills.console.arguments import InputParameter
-from mediapills.console.base.applications import BaseApplication
-from mediapills.console.base.outputs import BaseOutput
+from mediapills.console.exceptions import ConsoleUnrecognizedArgumentsException
 from mediapills.console.inputs import ConsoleInput
 from mediapills.console.parsers import InputArgumentsParser
 
@@ -39,7 +41,69 @@ def parameter(*args: t.Any, **kwargs: t.Any) -> InputParameter:  # dead: disable
     return InputParameter(*args, **kwargs)
 
 
-class Application(BaseApplication):  # type: ignore  # dead: disable
+class BaseApplication(metaclass=abc.ABCMeta):
+    """Interface  for the container a collection of commands."""
+
+    def __init__(
+        self,
+        stdout: Optional[BaseOutput] = None,
+        stderr: Optional[BaseOutput] = None,
+        description: str = "",
+        version: str = "",
+    ):
+        """Class constructor."""
+        self._stdout = stdout
+        self._stderr = stderr
+        self._description = description
+        self._version = version
+
+    @property
+    def stdout(self) -> BaseOutput:
+        """Application output setter."""
+        return self._stdout
+
+    @stdout.setter
+    def stdout(self, stdout: BaseOutput) -> None:
+        """Application output getter."""
+        self._stdout = stdout
+
+    @property
+    def stderr(self) -> BaseOutput:
+        """Application standard errors output setter."""
+        return self._stderr
+
+    @stderr.setter
+    def stderr(self, stderr: BaseOutput) -> None:
+        """Application standard errors output getter."""
+        self._stderr = stderr
+
+    @property
+    def description(self) -> str:
+        """Application description getter."""
+        return self._description
+
+    @description.setter
+    def description(self, description: str) -> None:
+        """Application description setter."""
+        self._description = description
+
+    @property
+    def version(self) -> str:
+        """Application description getter."""
+        return self._version
+
+    @version.setter
+    def version(self, version: str) -> None:
+        """Application description setter."""
+        self._version = version
+
+    @abc.abstractmethod
+    def run(self) -> None:
+        """Run the current application."""
+        raise NotImplementedError()
+
+
+class Application(BaseApplication):  # dead: disable
     """Collection of commands container facade."""
 
     __slots__ = ["_entrypoint"]
@@ -68,18 +132,15 @@ class Application(BaseApplication):  # type: ignore  # dead: disable
         self.__build_default_options()
 
     def __build_default_options(self) -> None:
-        self._options.append(option("-V", "--version", "Show version number and quit."))
         self._options.append(
-            option(
-                "-q",
-                "--quiet",
-                "Silent or quiet mode. Don't show progress meter or error messages.",
-            )
+            option("-V", "--version", description="Show version number and quit.")
         )
+        q_desc = "Silent or quiet mode. Don't show progress meter or error messages."
+        self._options.append(option("-q", "--quiet", description=q_desc,))
+        v_desc = "Verbosity level can be controlled globally for all commands."
         self._options.append(
-            option(
-                "-vvv", "Verbosity level can be controlled globally for all commands."
-            )
+            # parser.add_argument('--verbose', '-v', action='count', default=0)
+            option("-vvv", description=v_desc,)
         )
 
     @property
@@ -109,9 +170,12 @@ class Application(BaseApplication):  # type: ignore  # dead: disable
     def run(self) -> None:  # dead: disable
         """Run the current application command."""
         stdin = ConsoleInput(parser=self.parser)
-        stdin.validate()
+        try:
+            stdin.validate()
+        except ConsoleUnrecognizedArgumentsException:
+            self.stdout.write(self.parser.help())
 
-        # self._entrypoint.execute(stdin=self.stdin, stdout=self.stdout)
+        raise NotImplementedError
 
     def show_version(self) -> None:  # dead: disable
         """Show application version."""

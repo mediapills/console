@@ -20,7 +20,13 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-class ConsoleException(Exception):  # dead: disable
-    """Common base class for all console exceptions."""
+class ConsoleException(Exception):
+    """Base Class for all console exceptions."""
+
+    pass
+
+
+class ConsoleUnrecognizedArgumentsException(ConsoleException):
+    """Unrecognized arguments found during parsing."""
 
     pass
