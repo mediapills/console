@@ -138,16 +138,6 @@ class InputParameter(BaseArgument):  # type: ignore
 class InputCommand(BaseArgument):  # type: ignore
     """Interface for all console commands."""
 
-    # More info: https://tldp.org/LDP/abs/html/exitcodes.html
-    """No error. The script executed successfully."""
-    SUCCESS = 0  # dead: disable
-
-    """Catchall for general errors."""
-    FAILURE = 1  # dead: disable
-
-    """Misuse of shell builtins (according to Bash documentation)."""
-    INVALID = 2  # dead: disable
-
     def __init__(self, description: str = "", *args: Any) -> None:
         """Class constructor."""
         super().__init__(description=description, *args)

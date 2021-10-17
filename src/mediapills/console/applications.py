@@ -22,12 +22,16 @@ import abc
 import typing as t
 from typing import Optional
 
+from mediapills.console.abc import outputs
+from mediapills.console.abc.inputs import BaseInput
 from mediapills.console.abc.outputs import BaseOutput
 from mediapills.console.arguments import InputCommand
 from mediapills.console.arguments import InputOption
 from mediapills.console.arguments import InputParameter
 from mediapills.console.exceptions import ConsoleUnrecognizedArgumentsException
 from mediapills.console.inputs import ConsoleInput
+from mediapills.console.outputs import FAILURE
+from mediapills.console.outputs import SUCCESS
 from mediapills.console.parsers import InputArgumentsParser
 
 
@@ -98,12 +102,54 @@ class BaseApplication(metaclass=abc.ABCMeta):
         self._version = version
 
     @abc.abstractmethod
-    def run(self) -> None:
+    def run(self) -> None:  # dead: disable
         """Run the current application."""
         raise NotImplementedError()
 
 
-class Application(BaseApplication):  # dead: disable
+class VerboseApplication(BaseApplication, metaclass=abc.ABCMeta):
+    """Verbose aware application.
+    Verbosity levels:
+            -v: Show informational messages that highlight the progress of the
+            application at coarse-grained level.
+            -vv: Show fine-grained informational events that are most useful to debug an
+            application.
+            -vvv: Show finer-grained informational events that include tracing.
+    """
+
+    @property
+    def verbose_options(self) -> t.List[InputOption]:
+        """Verbosity options getter."""
+        options = (
+            (("-V", "--version"), "Show version number and quit."),
+            (
+                ("-q", "--quiet",),
+                "Silent or quiet mode. Don't show progress meter or error messages.",
+            ),
+            (("-v",), "Verbosity level can be controlled globally for all commands.",),
+        )
+        return [option(*args, description=desc) for args, desc in options]
+
+    def setup_stdout_verbosity(self, stdin: BaseInput) -> None:
+        """Set output verbosity level."""
+        if stdin.has_arg("quiet"):
+            self.stdout.verbosity = self.stdout.verbosity | outputs.VERBOSITY_QUIET
+
+        verbose = stdin.get_arg("v")
+        if verbose:
+            if verbose == 1:
+                self.stdout.verbosity = (
+                    self.stdout.verbosity | outputs.VERBOSITY_VERBOSE
+                )
+            elif verbose == 2:
+                self.stdout.verbosity = (
+                    self.stdout.verbosity | outputs.VERBOSITY_VERY_VERBOSE
+                )
+            elif verbose == 3:
+                self.stdout.verbosity = self.stdout.verbosity | outputs.VERBOSITY_DEBUG
+
+
+class Application(VerboseApplication):  # dead: disable
     """Collection of commands container facade."""
 
     __slots__ = ["_entrypoint"]
@@ -120,28 +166,7 @@ class Application(BaseApplication):  # dead: disable
             stdout=stdout, stderr=stderr, description=description, version=version,
         )
         self._parser: t.Optional[InputArgumentsParser] = None
-        """
-        Verbosity levels:
-        -v: Show informational messages that highlight the progress of the application at
-        coarse-grained level.
-        -vv: Show fine-grained informational events that are most useful to debug an
-        application.
-        -vvv: Show finer-grained informational events that include tracing.
-        """
-        self._options: t.List[InputOption] = []
-        self.__build_default_options()
-
-    def __build_default_options(self) -> None:
-        self._options.append(
-            option("-V", "--version", description="Show version number and quit.")
-        )
-        q_desc = "Silent or quiet mode. Don't show progress meter or error messages."
-        self._options.append(option("-q", "--quiet", description=q_desc,))
-        v_desc = "Verbosity level can be controlled globally for all commands."
-        self._options.append(
-            # parser.add_argument('--verbose', '-v', action='count', default=0)
-            option("-vvv", description=v_desc,)
-        )
+        self._options: t.List[InputOption] = self.verbose_options
 
     @property
     def parser(self) -> InputArgumentsParser:
@@ -170,12 +195,18 @@ class Application(BaseApplication):  # dead: disable
     def run(self) -> None:  # dead: disable
         """Run the current application command."""
         stdin = ConsoleInput(parser=self.parser)
+
         try:
             stdin.validate()
         except ConsoleUnrecognizedArgumentsException:
-            self.stdout.write(self.parser.help())
+            self.show_help(FAILURE)
 
-        raise NotImplementedError
+        self.setup_stdout_verbosity(stdin=stdin)
+
+    def show_help(self, code: int = SUCCESS) -> None:
+        """Show application help"""
+        self.stdout.write(self.parser.help())
+        exit(code)
 
     def show_version(self) -> None:  # dead: disable
         """Show application version."""
@@ -184,7 +215,7 @@ class Application(BaseApplication):  # dead: disable
         # return self._version
         pass
 
-    def command(self, name: str) -> None:
+    def command(self, name: str) -> None:  # dead: disable
         """Decorate a view function to register command in application."""
         # TODO: implement
         # TODO: reset stdin

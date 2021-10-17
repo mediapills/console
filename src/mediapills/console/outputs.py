@@ -20,6 +20,16 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from mediapills.console.abc.outputs import BaseConsoleOutput
 
+# More info: https://tldp.org/LDP/abs/html/exitcodes.html
+"""No error. The script executed successfully."""
+SUCCESS = 0
+
+"""Catchall for general errors."""
+FAILURE = 1
+
+"""Misuse of shell builtins (according to Bash documentation)."""
+INVALID = 2  # dead: disable
+
 
 class ConsoleOutput(BaseConsoleOutput):  # type: ignore  # dead: disable
     """Default class for all CLI output. It uses STDOUT and STDERR."""

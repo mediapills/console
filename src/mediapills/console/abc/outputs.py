@@ -53,25 +53,25 @@ class BaseOutput(metaclass=abc.ABCMeta):
         """Verbosity of the output setter."""
         self._verbosity = verbosity
 
-    @property
-    def quiet(self) -> bool:
-        """Level of verbosity status is quiet (-q)."""
-        return self.verbosity & VERBOSITY_QUIET > 0
-
-    @property
-    def verbose(self) -> bool:
-        """Status of verbosity level is verbose (-v)."""
-        return self.verbosity & VERBOSITY_VERBOSE > 0
-
-    @property
-    def very_verbose(self) -> bool:
-        """Level of verbosity status is very verbose (-vv)."""
-        return self.verbosity & VERBOSITY_VERY_VERBOSE > 0
-
-    @property
-    def debug(self) -> bool:
-        """Level of verbosity status is debug (-vvv)."""
-        return self.verbosity & VERBOSITY_DEBUG > 0
+    # @property
+    # def quiet(self) -> bool:
+    #     """Level of verbosity status is quiet (-q)."""
+    #     return self.verbosity & VERBOSITY_QUIET > 0
+    #
+    # @property
+    # def verbose(self) -> bool:
+    #     """Status of verbosity level is verbose (-v)."""
+    #     return self.verbosity & VERBOSITY_VERBOSE > 0
+    #
+    # @property
+    # def very_verbose(self) -> bool:
+    #     """Level of verbosity status is very verbose (-vv)."""
+    #     return self.verbosity & VERBOSITY_VERY_VERBOSE > 0
+    #
+    # @property
+    # def debug(self) -> bool:
+    #     """Level of verbosity status is debug (-vvv)."""
+    #     return self.verbosity & VERBOSITY_DEBUG > 0
 
 
 class BaseConsoleOutput(BaseOutput, metaclass=abc.ABCMeta):

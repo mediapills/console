@@ -22,12 +22,58 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from mediapills.console.abc import outputs
 from mediapills.console.applications import Application
+from mediapills.console.outputs import ConsoleOutput
 
 
 class TestApplication(unittest.TestCase):
     @patch("sys.argv", ["script_name"])
-    def test_default_verbosity_level_should_be_normal(self) -> None:
+    def test_no_args_should_no_output(self) -> None:
+        stdout = Mock()
         app = Application(stdout=Mock(), stderr=Mock())
-        with self.assertRaises(expected_exception=NotImplementedError):
+        app.run()
+        self.assertEqual(0, stdout.write.call_count)
+
+    @patch("sys.argv", ["script_name", "--incorrect"])
+    def test_exception_should_show_help(self) -> None:
+        stdout = Mock()
+        app = Application(stdout=stdout, stderr=Mock())
+        with self.assertRaises(SystemExit) as e:
             app.run()
+        stdout.write.assert_called_once()
+        self.assertEqual(e.exception.code, 1)
+
+    @patch("sys.argv", ["script_name"])
+    def test_default_verbosity_should_be_normal(self) -> None:
+        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app.run()
+        self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_QUIET)
+        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_NORMAL)
+        self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_VERBOSE)
+        self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_DEBUG)
+        self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_VERY_VERBOSE)
+
+    @patch("sys.argv", ["script_name", "-q"])
+    def test_quiet_verbosity_should_be_correct(self) -> None:
+        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app.run()
+        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_QUIET)
+
+    @patch("sys.argv", ["script_name", "-v"])
+    def test_verbose_verbosity_should_be_correct(self) -> None:
+        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app.run()
+        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_VERBOSE)
+
+    @patch("sys.argv", ["script_name", "-vv"])
+    def test_very_verbose_verbosity_should_be_correct(self) -> None:
+        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app.run()
+        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_VERY_VERBOSE)
+
+    @patch("sys.argv", ["script_name", "-vvv"])
+    def test_debug_verbosity_should_be_correct(self) -> None:
+        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app.run()
+        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_DEBUG)

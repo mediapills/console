@@ -19,18 +19,18 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
-from typing import List
+from typing import Dict
 from typing import Optional
 
 
 class BaseInput(metaclass=abc.ABCMeta):
     """Abstract Base Class for all Input classes."""
 
-    @property
-    @abc.abstractmethod
-    def command(self) -> Optional[str]:
-        """Return the first argument from the raw parameters (not parsed)."""
-        raise NotImplementedError()
+    # @property
+    # @abc.abstractmethod
+    # def command(self) -> Optional[str]:
+    #     """Return the first argument from the raw parameters (not parsed)."""
+    #     raise NotImplementedError()
 
     @abc.abstractmethod
     def get_arg(self, name: str) -> Optional[str]:
@@ -38,21 +38,21 @@ class BaseInput(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def has_arg(self, name: str) -> Optional[str]:
+    def has_arg(self, name: str) -> bool:
         """Return true if an InputParameter object exists by name or position."""
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_args(self) -> List[str]:
+    def get_args(self) -> Dict[str, str]:
         """Return all the given arguments merged with the default values."""
         raise NotImplementedError()
 
-    @abc.abstractmethod
-    def bind(self) -> None:
-        """Print a help message, including the program usage and information about the
-        arguments.
-        """
-        raise NotImplementedError()
+    # @abc.abstractmethod
+    # def bind(self) -> None:
+    #     """Print a help message, including the program usage and information about the
+    #     arguments.
+    #     """
+    #     raise NotImplementedError()
 
     @abc.abstractmethod
     def validate(self) -> None:

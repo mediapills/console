@@ -32,6 +32,7 @@ class ConsoleInput(BaseConsoleInput):  # type: ignore
     def __init__(self, parser: InputParser):
         """Class constructor."""
         self._parser = parser
+        self._argv: t.Optional[t.List[str]] = None
 
     @property
     def parser(self) -> InputParser:
@@ -43,39 +44,37 @@ class ConsoleInput(BaseConsoleInput):  # type: ignore
         """Input parser setter."""
         self._parser = parser
 
-    @property
-    def command(self) -> t.Optional[str]:
-        """Return the first argument from the raw parameters (not parsed)."""
-        args = self.get_args()
-        return None if len(args) == 0 else args[0]
+    # @property
+    # def command(self) -> t.Optional[str]:
+    #     """Return the first argument from the raw parameters (not parsed)."""
+    #     raise NotImplementedError()
 
-    def get_arg(self, name: str) -> t.Optional[str]:  # dead: disable
+    def get_arg(self, name: str) -> t.Optional[str]:
         """Return the argument value for a given argument name."""
-        # TODO: implement this method
-        raise NotImplementedError()
+        return self.get_args().get(name, None)
 
-    def has_arg(self, name: str) -> t.Optional[str]:  # dead: disable
+    def has_arg(self, name: str) -> bool:
         """Return true if an InputParameter object exists by name or position."""
-        # TODO: implement this method
-        raise NotImplementedError()
+        return self.get_arg(name) is not None
 
-    def get_args(self) -> t.List[str]:  # dead: disable
+    def get_args(self) -> t.Dict[str, str]:
         """Return all the given arguments merged with the default values."""
-        # parser = ArgumentParser()
-        # _, args = parser.parse_known_args()
+        args, _ = self.parser.parse(self.get_argv())
 
-        return []
+        return args
 
-    @staticmethod
-    def get_argv() -> t.List[str]:
+    def get_argv(self) -> t.List[str]:
         """Get console arguments list"""
-        argv = sys.argv
-        argv.pop()
-        return argv
+        if self._argv is None:
+            argv = sys.argv
+            argv.pop(0)
+            self._argv = argv
 
-    def bind(self) -> t.Dict[str, str]:
-        """Binds the current Input instance with the given arguments."""
-        raise NotImplementedError()
+        return self._argv
+
+    # def bind(self) -> t.Dict[str, str]:
+    #     """Binds the current Input instance with the given arguments."""
+    #     raise NotImplementedError()
 
     def validate(self) -> None:
         """Validate arguments."""
