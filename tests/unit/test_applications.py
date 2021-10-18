@@ -41,8 +41,9 @@ class TestApplication(unittest.TestCase):
         app = Application(stdout=stdout, stderr=Mock())
         with self.assertRaises(SystemExit) as e:
             app.run()
-        stdout.write.assert_called_once()
         self.assertEqual(e.exception.code, 1)
+
+        stdout.write.assert_called_once()
 
     @patch("sys.argv", ["script_name"])
     def test_default_verbosity_should_be_normal(self) -> None:
@@ -77,3 +78,25 @@ class TestApplication(unittest.TestCase):
         app = Application(stdout=ConsoleOutput(), stderr=Mock())
         app.run()
         self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_DEBUG)
+
+    @patch("sys.argv", ["script_name", "-h"])
+    def test_help_option_should_show_help(self) -> None:
+        mock_out = Mock()
+        app = Application(stdout=mock_out, stderr=Mock(), show_help=True)
+        with self.assertRaises(SystemExit) as e:
+            app.run()
+        self.assertEqual(e.exception.code, 0)
+
+        mock_out.write.assert_called_once()
+
+    @patch("sys.argv", ["script_name", "-V"])
+    def test_version_option_should_show_version(self) -> None:
+        mock_out = Mock()
+        app = Application(
+            stdout=mock_out, stderr=Mock(), version="test", show_version=True
+        )
+        with self.assertRaises(SystemExit) as e:
+            app.run()
+        self.assertEqual(e.exception.code, 0)
+
+        mock_out.write.assert_called_with("test")

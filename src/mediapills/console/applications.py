@@ -54,12 +54,16 @@ class BaseApplication(metaclass=abc.ABCMeta):
         stderr: Optional[BaseOutput] = None,
         description: str = "",
         version: str = "",
+        show_help: bool = False,
+        show_version: bool = False,
     ):
         """Class constructor."""
         self._stdout = stdout
         self._stderr = stderr
         self._description = description
         self._version = version
+        self._show_help = show_help
+        self._show_version = show_version
 
     @property
     def stdout(self) -> BaseOutput:
@@ -106,8 +110,43 @@ class BaseApplication(metaclass=abc.ABCMeta):
         """Run the current application."""
         raise NotImplementedError()
 
+    @property
+    def default_options(self) -> t.List[InputOption]:
+        """Verbosity options getter."""
+        options = []
 
-class VerboseApplication(BaseApplication, metaclass=abc.ABCMeta):
+        if self._show_help:  # Add version message
+            options.append(
+                option("-h", "--help", description="show this help message and exit.")
+            )
+
+        if self._show_version:  # Add help message
+            options.append(
+                option("-V", "--version", description="show version number and quit.")
+            )
+
+        return options
+
+    def apply_options(self, stdin: BaseInput) -> None:
+        """Set default options."""
+        if stdin.has_arg("help"):
+            self.show_help()
+
+        if stdin.has_arg("version"):
+            self.show_version()
+
+    @abc.abstractmethod
+    def show_help(self) -> None:
+        """Show application version."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def show_version(self) -> None:
+        """Show application version."""
+        raise NotImplementedError()
+
+
+class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
     """Verbose aware application.
     Verbosity levels:
             -v: Show informational messages that highlight the progress of the
@@ -118,20 +157,24 @@ class VerboseApplication(BaseApplication, metaclass=abc.ABCMeta):
     """
 
     @property
-    def verbose_options(self) -> t.List[InputOption]:
+    def default_options(self) -> t.List[InputOption]:
         """Verbosity options getter."""
         options = (
-            (("-V", "--version"), "Show version number and quit."),
             (
                 ("-q", "--quiet",),
-                "Silent or quiet mode. Don't show progress meter or error messages.",
+                "don't show progress meter or error messages (silent or quiet mode).",
             ),
-            (("-v",), "Verbosity level can be controlled globally for all commands.",),
+            (("-v",), "set output verbosity level from verbose (-v) to debug (-vvv).",),
         )
-        return [option(*args, description=desc) for args, desc in options]
 
-    def setup_stdout_verbosity(self, stdin: BaseInput) -> None:
+        return super().default_options + [
+            option(*args, description=desc) for args, desc in options
+        ]
+
+    def apply_options(self, stdin: BaseInput) -> None:
         """Set output verbosity level."""
+        super().apply_options(stdin)
+
         if stdin.has_arg("quiet"):
             self.stdout.verbosity = self.stdout.verbosity | outputs.VERBOSITY_QUIET
 
@@ -149,10 +192,8 @@ class VerboseApplication(BaseApplication, metaclass=abc.ABCMeta):
                 self.stdout.verbosity = self.stdout.verbosity | outputs.VERBOSITY_DEBUG
 
 
-class Application(VerboseApplication):  # dead: disable
+class Application(VerboseAwareApplication):  # dead: disable
     """Collection of commands container facade."""
-
-    __slots__ = ["_entrypoint"]
 
     def __init__(
         self,
@@ -160,13 +201,20 @@ class Application(VerboseApplication):  # dead: disable
         stderr: t.Optional[BaseOutput],
         description: str = "",
         version: str = "",
+        show_help: bool = False,
+        show_version: bool = False,
     ):
         """Class constructor."""
         super().__init__(
-            stdout=stdout, stderr=stderr, description=description, version=version,
+            stdout=stdout,
+            stderr=stderr,
+            description=description,
+            version=version,
+            show_version=show_version,
+            show_help=show_help,
         )
         self._parser: t.Optional[InputArgumentsParser] = None
-        self._options: t.List[InputOption] = self.verbose_options
+        self._options: t.List[InputOption] = self.default_options
 
     @property
     def parser(self) -> InputArgumentsParser:
@@ -201,22 +249,23 @@ class Application(VerboseApplication):  # dead: disable
         except ConsoleUnrecognizedArgumentsException:
             self.show_help(FAILURE)
 
-        self.setup_stdout_verbosity(stdin=stdin)
+        self.apply_options(stdin=stdin)
 
     def show_help(self, code: int = SUCCESS) -> None:
         """Show application help"""
         self.stdout.write(self.parser.help())
         exit(code)
 
-    def show_version(self) -> None:  # dead: disable
+    def show_version(self) -> None:
         """Show application version."""
         # {prog}/{version} Python/{python version} {OS}/{OS version}
         # {mediapills.console}/{version}
-        # return self._version
-        pass
+        self.stdout.write(self.version)
+        exit(SUCCESS)
 
     def command(self, name: str) -> None:  # dead: disable
         """Decorate a view function to register command in application."""
         # TODO: implement
         # TODO: reset stdin
+
         raise NotImplementedError()
