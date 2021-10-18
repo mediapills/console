@@ -34,14 +34,18 @@ OUTPUT_PLAIN = 2 ** 2  # dead: disable
 class BaseOutput(metaclass=abc.ABCMeta):
     """Abstract Base Class for all Output classes."""
 
-    def __init__(self, verbosity: int = VERBOSITY_NORMAL):
-        """Class constructor."""
-        self._verbosity = verbosity
-
     @abc.abstractmethod
     def write(self, msg: str, newline: bool = False, options: int = 0) -> None:
         """Write a message to the output."""
         raise NotImplementedError()
+
+
+class BaseVerboseAwareOutput(BaseOutput, metaclass=abc.ABCMeta):
+    """Verbose aware base output."""
+
+    def __init__(self, verbosity: int = VERBOSITY_NORMAL):
+        """Class constructor."""
+        self._verbosity = verbosity
 
     @property
     def verbosity(self) -> int:
@@ -74,7 +78,7 @@ class BaseOutput(metaclass=abc.ABCMeta):
     #     return self.verbosity & VERBOSITY_DEBUG > 0
 
 
-class BaseConsoleOutput(BaseOutput, metaclass=abc.ABCMeta):
+class BaseConsoleOutput(BaseVerboseAwareOutput, metaclass=abc.ABCMeta):
     """Abstract Base Class for all Console Output classes."""
 
     pass

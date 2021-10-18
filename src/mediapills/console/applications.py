@@ -185,8 +185,11 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
             return
 
         verbosity = {
+            # TODO: call method set_verbose()
             1: outputs.VERBOSITY_VERBOSE,
+            # TODO: call method set_very_verbose()
             2: outputs.VERBOSITY_VERY_VERBOSE,
+            # TODO: call method set_debug()
             3: outputs.VERBOSITY_DEBUG,
             # Verbosity for greater than 3 "v" is VERBOSITY_DEBUG
         }.get(stdin.get_arg("v"), outputs.VERBOSITY_DEBUG)
@@ -260,27 +263,28 @@ class Application(VerboseAwareApplication):  # dead: disable
 
     def show_version(self) -> None:
         """Show application version."""
-        line = (
-            "{cmd}/{version} "
-            "Python/{sys_version} "
-            "{sysname}/{release} "
-            "mediapills.core/{package_version}"
-        ).format(
-            cmd=sys.argv[0],
-            version=self.version,
-            sysname=os.uname().sysname,
-            release=os.uname().release,
-            package_version=version,
-            sys_version=".".join(
-                [
-                    str(sys.version_info.major),
-                    str(sys.version_info.minor),
-                    str(sys.version_info.micro),
+        ver = " ".join(
+            [
+                "{app}/{ver}".format(**kwargs)
+                for kwargs in [
+                    {"app": sys.argv[0], "ver": self.version},
+                    {
+                        "app": "Python",
+                        "ver": ".".join(
+                            [
+                                str(sys.version_info.major),
+                                str(sys.version_info.minor),
+                                str(sys.version_info.micro),
+                            ]
+                        ),
+                    },
+                    {"app": os.uname().sysname, "ver": os.uname().release},
+                    {"app": "mediapills.core", "ver": version},
                 ]
-            ),
+            ]
         )
 
-        self.stdout.write(line)
+        self.stdout.write(ver)
         exit(SUCCESS)
 
     def command(self, name: str) -> None:  # dead: disable

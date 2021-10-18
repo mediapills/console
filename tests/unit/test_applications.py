@@ -22,33 +22,41 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from mediapills.console.abc import outputs
+from mediapills.console.abc import outputs  # TODO: remove after full implementation
 from mediapills.console.applications import Application
-from mediapills.console.outputs import ConsoleOutput
 
 
 class TestApplication(unittest.TestCase):
-    @patch("sys.argv", ["script_name"])
-    def test_no_args_should_no_output(self) -> None:
+    @patch("mediapills.console.applications.ConsoleInput")
+    def test_no_args_should_no_output(self, mock_in) -> None:
+        mock_in.return_value.validate.return_value = None
+        mock_in.return_value.has_arg.return_value = False
         mock_out = Mock()
-        app = Application(stdout=Mock(), stderr=Mock())
+
+        app = Application(stdout=mock_out, stderr=Mock())
         app.run()
 
         self.assertEqual(0, mock_out.write.call_count)
 
-    @patch("sys.argv", ["script_name", "--incorrect"])
+    @patch(
+        "mediapills.console.applications.InputArgumentsParser.parse",
+        Mock(return_value=({}, ["--option"])),
+    )
     def test_exception_should_show_help(self) -> None:
-        mock_out = Mock()
-        app = Application(stdout=mock_out, stderr=Mock())
+        app = Application(stdout=Mock(), stderr=Mock())
 
         with self.assertRaises(SystemExit) as e:
             app.run()
         self.assertEqual(e.exception.code, 1)
-        mock_out.write.assert_called_once()
 
-    @patch("sys.argv", ["script_name"])
+    @patch(
+        "mediapills.console.applications.InputArgumentsParser.parse",
+        Mock(return_value=({}, [])),
+    )
     def test_default_verbosity_should_be_normal(self) -> None:
-        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app = Application(
+            stdout=Mock(verbosity=outputs.VERBOSITY_NORMAL), stderr=Mock()
+        )
         app.run()
 
         self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_QUIET)
@@ -57,35 +65,50 @@ class TestApplication(unittest.TestCase):
         self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_DEBUG)
         self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_VERY_VERBOSE)
 
-    @patch("sys.argv", ["script_name", "-q"])
+    @patch(
+        "mediapills.console.applications.InputArgumentsParser.parse",
+        Mock(return_value=({"quiet": 1}, [])),
+    )
     def test_quiet_verbosity_should_be_correct(self) -> None:
-        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app = Application(stdout=Mock(verbosity=0), stderr=Mock())
         app.run()
 
         self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_QUIET)
 
-    @patch("sys.argv", ["script_name", "-v"])
+    @patch(
+        "mediapills.console.applications.InputArgumentsParser.parse",
+        Mock(return_value=({"v": 1}, [])),
+    )
     def test_verbose_verbosity_should_be_correct(self) -> None:
-        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app = Application(stdout=Mock(verbosity=0), stderr=Mock())
         app.run()
 
         self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_VERBOSE)
 
-    @patch("sys.argv", ["script_name", "-vv"])
+    @patch(
+        "mediapills.console.applications.InputArgumentsParser.parse",
+        Mock(return_value=({"v": 2}, [])),
+    )
     def test_very_verbose_verbosity_should_be_correct(self) -> None:
-        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app = Application(stdout=Mock(verbosity=0), stderr=Mock())
         app.run()
 
         self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_VERY_VERBOSE)
 
-    @patch("sys.argv", ["script_name", "-vvv"])
+    @patch(
+        "mediapills.console.applications.InputArgumentsParser.parse",
+        Mock(return_value=({"v": 3}, [])),
+    )
     def test_debug_verbosity_should_be_correct(self) -> None:
-        app = Application(stdout=ConsoleOutput(), stderr=Mock())
+        app = Application(stdout=Mock(verbosity=0), stderr=Mock())
         app.run()
 
         self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_DEBUG)
 
-    @patch("sys.argv", ["script_name", "-h"])
+    @patch(
+        "mediapills.console.applications.InputArgumentsParser.parse",
+        Mock(return_value=({"help": 1}, [])),
+    )
     def test_help_option_should_show_help(self) -> None:
         mock_out = Mock()
         app = Application(stdout=mock_out, stderr=Mock(), show_help=True)
@@ -95,7 +118,10 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(e.exception.code, 0)
         mock_out.write.assert_called_once()
 
-    @patch("sys.argv", ["script_name", "-V"])
+    @patch(
+        "mediapills.console.applications.InputArgumentsParser.parse",
+        Mock(return_value=({"version": 1}, [])),
+    )
     def test_version_option_should_show_version(self) -> None:
         mock_out = Mock()
         app = Application(
