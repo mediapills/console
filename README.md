@@ -3,7 +3,7 @@
 [![Requirements Status](https://requires.io/github/mediapills/console/requirements.svg?branch=main)](https://requires.io/github/mediapills/console/requirements/?branch=main)
 
 > CAUTION!
-> 
+>
 > MediaPills Console package is on "active development".
 
 # Install
