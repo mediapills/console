@@ -178,18 +178,17 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
         if stdin.has_arg("quiet"):
             self.stdout.verbosity = self.stdout.verbosity | outputs.VERBOSITY_QUIET
 
-        verbose = stdin.get_arg("v")
-        if verbose:
-            if verbose == 1:
-                self.stdout.verbosity = (
-                    self.stdout.verbosity | outputs.VERBOSITY_VERBOSE
-                )
-            elif verbose == 2:
-                self.stdout.verbosity = (
-                    self.stdout.verbosity | outputs.VERBOSITY_VERY_VERBOSE
-                )
-            elif verbose == 3:
-                self.stdout.verbosity = self.stdout.verbosity | outputs.VERBOSITY_DEBUG
+        if not stdin.has_arg("v"):
+            return
+
+        verbosity = {
+            1: outputs.VERBOSITY_VERBOSE,
+            2: outputs.VERBOSITY_VERY_VERBOSE,
+            3: outputs.VERBOSITY_DEBUG,
+        }.get(stdin.get_arg("v"))
+
+        if verbosity:
+            self.stdout.verbosity = self.stdout.verbosity | verbosity
 
 
 class Application(VerboseAwareApplication):  # dead: disable

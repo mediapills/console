@@ -49,7 +49,7 @@ class ConsoleInput(BaseConsoleInput):  # type: ignore
     #     """Return the first argument from the raw parameters (not parsed)."""
     #     raise NotImplementedError()
 
-    def get_arg(self, name: str) -> t.Optional[str]:
+    def get_arg(self, name: str) -> t.Optional[t.Union[str, int]]:
         """Return the argument value for a given argument name."""
         return self.get_args().get(name, None)
 

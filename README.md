@@ -1,6 +1,6 @@
-[![GitHub Workflow Actions Status](https://github.com/mediapills/console/workflows/CI%20Build/badge.svg?branch=main)](https://github.com/mediapills/console/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mediapills/console/blob/main/LICENSE.md)
-[![Requirements Status](https://requires.io/github/mediapills/console/requirements.svg?branch=main)](https://requires.io/github/mediapills/console/requirements/?branch=main)
+[![GitHub Workflow Actions Status](https://github.com/mediapills/console/workflows/CI%20Build/badge.svg?branch=dev)](https://github.com/mediapills/console/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mediapills/console/blob/dev/LICENSE.md)
+[![Requirements Status](https://requires.io/github/mediapills/console/requirements.svg?branch=dev)](https://requires.io/github/mediapills/console/requirements/?branch=dev)
 
 > CAUTION!
 >
@@ -19,7 +19,7 @@ python3 -m venv mediapills
 
 source mediapills/bin/activate
 
-pip install git+ssh://git@github.com/mediapills/console.git@main#egg=mediapills.console
+pip install git+ssh://git@github.com/mediapills/console.git@dev#egg=mediapills.console
 ```
 
 ## Windows (CMD/PowerShell)
@@ -33,5 +33,5 @@ python3 -m venv mediapills
 
 ./mediapills/bin/activate
 
-pip install git+ssh://git@github.com/mediapills/console.git@main#egg=mediapills.console
+pip install git+ssh://git@github.com/mediapills/console.git@dev#egg=mediapills.console
 ```

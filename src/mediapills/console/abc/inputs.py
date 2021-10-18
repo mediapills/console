@@ -21,6 +21,7 @@
 import abc
 from typing import Dict
 from typing import Optional
+from typing import Union
 
 
 class BaseInput(metaclass=abc.ABCMeta):
@@ -33,7 +34,7 @@ class BaseInput(metaclass=abc.ABCMeta):
     #     raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_arg(self, name: str) -> Optional[str]:
+    def get_arg(self, name: str) -> Optional[Union[str, int]]:
         """Return the argument value for a given argument name."""
         raise NotImplementedError()
 
