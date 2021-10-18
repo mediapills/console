@@ -66,7 +66,7 @@ class ConsoleInput(BaseConsoleInput):  # type: ignore
     def get_argv(self) -> t.List[str]:
         """Get console arguments list"""
         if self._argv is None:
-            argv = sys.argv
+            argv = [*sys.argv]
             argv.pop(0)
             self._argv = argv
 

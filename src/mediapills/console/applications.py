@@ -19,6 +19,8 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
+import os
+import sys
 import typing as t
 from typing import Optional
 
@@ -33,6 +35,7 @@ from mediapills.console.inputs import ConsoleInput
 from mediapills.console.outputs import FAILURE
 from mediapills.console.outputs import SUCCESS
 from mediapills.console.parsers import InputArgumentsParser
+from mediapills.console.version import version
 
 
 def option(*args: t.Any, **kwargs: t.Any) -> InputOption:
@@ -115,12 +118,12 @@ class BaseApplication(metaclass=abc.ABCMeta):
         """Verbosity options getter."""
         options = []
 
-        if self._show_help:  # Add version message
+        if self._show_help:  # Add show help message option
             options.append(
                 option("-h", "--help", description="show this help message and exit.")
             )
 
-        if self._show_version:  # Add help message
+        if self._show_version:  # Add show version message option
             options.append(
                 option("-V", "--version", description="show version number and quit.")
             )
@@ -185,10 +188,10 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
             1: outputs.VERBOSITY_VERBOSE,
             2: outputs.VERBOSITY_VERY_VERBOSE,
             3: outputs.VERBOSITY_DEBUG,
-        }.get(stdin.get_arg("v"))
+            # Verbosity for greater than 3 "v" is VERBOSITY_DEBUG
+        }.get(stdin.get_arg("v"), outputs.VERBOSITY_DEBUG)
 
-        if verbosity:
-            self.stdout.verbosity = self.stdout.verbosity | verbosity
+        self.stdout.verbosity = self.stdout.verbosity | verbosity
 
 
 class Application(VerboseAwareApplication):  # dead: disable
@@ -257,9 +260,27 @@ class Application(VerboseAwareApplication):  # dead: disable
 
     def show_version(self) -> None:
         """Show application version."""
-        # {prog}/{version} Python/{python version} {OS}/{OS version}
-        # {mediapills.console}/{version}
-        self.stdout.write(self.version)
+        line = (
+            "{cmd}/{version} "
+            "Python/{sys_version} "
+            "{sysname}/{release} "
+            "mediapills.core/{package_version}"
+        ).format(
+            cmd=sys.argv[0],
+            version=self.version,
+            sysname=os.uname().sysname,
+            release=os.uname().release,
+            package_version=version,
+            sys_version=".".join(
+                [
+                    str(sys.version_info.major),
+                    str(sys.version_info.minor),
+                    str(sys.version_info.micro),
+                ]
+            ),
+        )
+
+        self.stdout.write(line)
         exit(SUCCESS)
 
     def command(self, name: str) -> None:  # dead: disable
