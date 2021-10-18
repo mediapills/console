@@ -2,6 +2,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mediapills/console/blob/main/LICENSE.md)
 [![Requirements Status](https://requires.io/github/mediapills/console/requirements.svg?branch=main)](https://requires.io/github/mediapills/console/requirements/?branch=main)
 
+> CAUTION!
+> 
+> MediaPills Console package is on "active development".
 
 # Install
 
