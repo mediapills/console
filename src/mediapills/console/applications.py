@@ -24,9 +24,13 @@ import sys
 import typing as t
 from typing import Optional
 
-from mediapills.console import arguments
 from mediapills.console.abc.inputs import BaseInput
 from mediapills.console.abc.outputs import BaseConsoleOutput
+from mediapills.console.arguments import InputOption
+from mediapills.console.arguments import InputParameter
+from mediapills.console.arguments import TInputCommands
+from mediapills.console.arguments import TInputOptions
+from mediapills.console.arguments import TInputParameters
 from mediapills.console.exceptions import ConsoleUnrecognizedArgumentsException
 from mediapills.console.inputs import ConsoleInput
 from mediapills.console.outputs import FAILURE
@@ -36,19 +40,17 @@ from mediapills.console.version import version as setup_version
 
 PACKAGE_NAME = "mediapills.core"
 
-InputOptions = t.List[arguments.InputOption]
-InputParameters = t.List[arguments.InputParameter]
 Callable = t.Callable[..., t.Any]
 
 
-def option(*args: t.Any, **kwargs: t.Any) -> arguments.InputOption:
+def option(*args: t.Any, **kwargs: t.Any) -> InputOption:
     """Object InputOption builder."""
-    return arguments.InputOption(*args, **kwargs)
+    return InputOption(*args, **kwargs)
 
 
-def parameter(*args: t.Any, **kwargs: t.Any) -> arguments.InputParameter:
+def parameter(*args: t.Any, **kwargs: t.Any) -> InputParameter:
     """Object InputParameter builder."""
-    return arguments.InputParameter(*args, **kwargs)
+    return InputParameter(*args, **kwargs)
 
 
 class BaseApplication(metaclass=abc.ABCMeta):
@@ -117,7 +119,7 @@ class BaseApplication(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @property
-    def default_options(self) -> InputOptions:
+    def default_options(self) -> TInputOptions:
         """Verbosity options getter."""
         options = []
 
@@ -163,25 +165,30 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
     """
 
     @property
-    def default_options(self) -> InputOptions:
+    def default_options(self) -> TInputOptions:
         """Verbosity options getter."""
-        options = (
-            (
-                ("-q", "--quiet",),
-                "don't show progress meter or error messages (silent or quiet mode).",
-            ),
-            (
-                ("-v",),
-                (
-                    "increase the verbosity of messages: "
-                    "1 for normal output, 2 for more verbose output and 3 for debug."
+        options = super().default_options
+
+        options.append(
+            option(
+                "-q",
+                "--quiet",
+                description=(
+                    "don't show progress meter or error messages (silent or quiet mode)."
                 ),
-            ),
+            )
         )
 
-        return super().default_options + [
-            option(*args, description=desc) for args, desc in options
-        ]
+        options.append(
+            option(
+                "-v",
+                description=(
+                    "increase the verbosity of messages: "
+                    "1 for normal output, 2 for more verbose output and more for debug."
+                ),
+            )
+        )
+        return options
 
     def apply_options(self, stdin: BaseInput) -> None:
         """Set output verbosity level."""
@@ -221,10 +228,26 @@ class Application(VerboseAwareApplication):
             show_version=show_version,
             show_help=show_help,
         )
+        self._options: TInputOptions = self.default_options
+        self._parameters: TInputParameters = []
+        self._commands: TInputCommands = []
         self._parser: t.Optional[InputArgumentsParser] = None
-        self._options: InputOptions = self.default_options
-        self._parameters: InputParameters = []
         self._entrypoint: t.Optional[Callable] = None
+
+    @property
+    def options(self) -> TInputOptions:
+        """Application options getter."""
+        return self._options
+
+    @property
+    def parameters(self) -> TInputParameters:
+        """Application parameters getter"""
+        return self._parameters
+
+    @property
+    def commands(self) -> TInputCommands:
+        """Application commands getter"""
+        return self._commands
 
     @property
     def parser(self) -> InputArgumentsParser:
@@ -234,21 +257,6 @@ class Application(VerboseAwareApplication):
                 arguments=[*self.parameters, *self.options, *self.commands]
             )
         return self._parser
-
-    @property
-    def options(self) -> InputOptions:
-        """Application options getter."""
-        return self._options
-
-    @property
-    def parameters(self) -> InputParameters:
-        """Application parameters getter"""
-        return self._parameters
-
-    @property
-    def commands(self) -> t.List[arguments.InputCommand]:
-        """Application commands getter"""
-        return []
 
     def run(self) -> None:
         """Run the current application command."""
@@ -265,6 +273,8 @@ class Application(VerboseAwareApplication):
             self.do_dispatch(stdin=stdin)
         elif self._entrypoint is not None:
             self.do_entrypoint(stdin=stdin)
+        elif self._show_help:
+            self.show_help()
         else:
             pass  # Nothing to run
 
@@ -313,8 +323,8 @@ class Application(VerboseAwareApplication):
         """Allow you to configure a application that will run as an executable."""
         # TODO raise error if already defined
         def append_args(
-            options: t.Optional[InputOptions] = None,
-            parameters: t.Optional[InputParameters] = None,
+            options: t.Optional[TInputOptions] = None,
+            parameters: t.Optional[TInputParameters] = None,
         ) -> None:
             if options is not None:
                 for arg in options:

@@ -27,7 +27,31 @@ from mediapills.console.abc.arguments import BaseArgument
 from mediapills.console.abc.inputs import BaseInput
 from mediapills.console.abc.outputs import BaseOutput
 
-TYPE_DEFAULT = Optional[Union[str, int, List[Union[str, int]]]]
+DefaultValue = Optional[Union[str, int, List[Union[str, int]]]]
+
+
+"""A value must be passed when the option is used (e.g. --iterations=5 or -i5)."""
+VALUE_REQUIRED = 1  # 2 ** 0
+
+"""The option may or may not have a value (e.g. --yell or --yell=loud)."""
+VALUE_OPTIONAL = 2  # 2 ** 1
+
+"""The option accepts multiple values (e.g. --dir=/foo --dir=/bar)."""
+VALUE_IS_ARRAY = 4  # 2 ** 2
+
+ERR_MSG_INVALID_MODE = 'Argument mode "{mode}" is not valid.'
+
+ERR_MSG_MODE_CONSTRAINT = (
+    "Argument mode can not be VALUE_OPTIONAL and VALUE_REQUIRED simultaneously."
+)
+
+ERR_MSG_DEFAULT_ASSIGNMENT = (
+    "Cannot set a default value except for VALUE_OPTIONAL mode."
+)
+
+ERR_MSG_DEFAULT_ARRAY_VALUE = "A default value for an array argument must be an list."
+
+ERR_MSG_DEFAULT_VALUE_TYPE = "A default value should be 'int' or 'str' type."
 
 
 class InputOption(BaseArgument):  # type: ignore
@@ -39,42 +63,17 @@ class InputOption(BaseArgument):  # type: ignore
 class InputParameter(BaseArgument):  # type: ignore
     """Input Argument Parameter implementation."""
 
-    """A value must be passed when the option is used (e.g. --iterations=5 or -i5)."""
-    VALUE_REQUIRED = 1  # 2 ** 0
-
-    """The option may or may not have a value (e.g. --yell or --yell=loud)."""
-    VALUE_OPTIONAL = 2  # 2 ** 1
-
-    """The option accepts multiple values (e.g. --dir=/foo --dir=/bar)."""
-    VALUE_IS_ARRAY = 4  # 2 ** 2
-
-    ERR_MSG_INVALID_MODE = 'Argument mode "{mode}" is not valid.'
-
-    ERR_MSG_MODE_CONSTRAINT = (
-        "Argument mode can not be VALUE_OPTIONAL and VALUE_REQUIRED simultaneously."
-    )
-
-    ERR_MSG_DEFAULT_ASSIGNMENT = (
-        "Cannot set a default value except for VALUE_OPTIONAL mode."
-    )
-
-    ERR_MSG_DEFAULT_ARRAY_VALUE = (
-        "A default value for an array argument must be an list."
-    )
-
-    ERR_MSG_DEFAULT_VALUE_TYPE = "A default value should be 'int' or 'str' type."
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Class constructor."""
         super().__init__(*args, description=kwargs.get("description", ""))
-        self._mode = self.VALUE_OPTIONAL
-        self._default: TYPE_DEFAULT = None
+        self._mode = VALUE_OPTIONAL
+        self._default: DefaultValue = None
         self.__construct(**kwargs)
 
     def __construct(
         self,
         mode: int = VALUE_OPTIONAL,
-        default: Optional[Any] = None,
+        default: DefaultValue = None,
         description: str = "",  # dead: disable
     ) -> None:
         """Class strict constructor."""
@@ -90,47 +89,51 @@ class InputParameter(BaseArgument):  # type: ignore
     def mode(self, mode: int) -> None:
         """Argument mode setter."""
         if mode > 7 or mode < 1:
-            raise ValueError(self.ERR_MSG_INVALID_MODE.format(mode=mode))
+            raise ValueError(ERR_MSG_INVALID_MODE.format(mode=mode))
 
-        if mode & self.VALUE_OPTIONAL and mode & self.VALUE_REQUIRED:
-            raise ValueError(self.ERR_MSG_MODE_CONSTRAINT)
+        if mode & VALUE_OPTIONAL and mode & VALUE_REQUIRED:
+            raise ValueError(ERR_MSG_MODE_CONSTRAINT)
 
         self._mode = mode
 
     def is_optional(self) -> bool:  # dead: disable
         """Return True if an argument is VALUE_OPTIONAL."""
-        return self._mode & self.VALUE_OPTIONAL > 0
+        return self._mode & VALUE_OPTIONAL > 0
 
     def is_required(self) -> bool:  # dead: disable
         """Return True if an argument is VALUE_REQUIRED."""
-        return self._mode & self.VALUE_REQUIRED > 0
+        return self._mode & VALUE_REQUIRED > 0
 
     def is_array(self) -> bool:
         """Return True if an argument is array type."""
-        return self._mode & self.VALUE_IS_ARRAY > 0
+        return self._mode & VALUE_IS_ARRAY > 0
 
     @property
-    def default(self) -> TYPE_DEFAULT:
+    def default(self) -> DefaultValue:
         """Argument default value getter."""
         return self._default
 
     @default.setter
-    def default(self, default: TYPE_DEFAULT = None) -> None:
+    def default(self, default: DefaultValue = None) -> None:
         """Argument default value setter."""
-        if self.mode & self.VALUE_REQUIRED > 0 and default is not None:
-            raise ValueError(self.ERR_MSG_DEFAULT_ASSIGNMENT)
+        if self.mode & VALUE_REQUIRED > 0 and default is not None:
+            raise ValueError(ERR_MSG_DEFAULT_ASSIGNMENT)
 
         if self.is_array():
             if default is None:
                 self._default = []
             elif not isinstance(default, list):
-                raise ValueError(self.ERR_MSG_DEFAULT_ARRAY_VALUE)
+                raise ValueError(ERR_MSG_DEFAULT_ARRAY_VALUE)
         elif default is None:
             pass
         elif not isinstance(default, (str, int)) or isinstance(default, bool):
-            raise ValueError(self.ERR_MSG_DEFAULT_VALUE_TYPE)
+            raise ValueError(ERR_MSG_DEFAULT_VALUE_TYPE)
 
         self._default = default
+
+
+TInputOptions = List[InputOption]
+TInputParameters = List[InputParameter]
 
 
 class InputCommand(BaseArgument):  # type: ignore
@@ -139,8 +142,8 @@ class InputCommand(BaseArgument):  # type: ignore
     def __init__(self, description: str = "", *args: Any) -> None:
         """Class constructor."""
         super().__init__(description=description, *args)
-        self._options = []  # type: List[InputOption]
-        self._parameters = []  # type: List[InputParameter]
+        self._options = []  # type: TInputOptions
+        self._parameters = []  # type: TInputParameters
 
     @property
     def options(self) -> List[InputOption]:
@@ -157,13 +160,16 @@ class InputCommand(BaseArgument):  # type: ignore
         raise NotImplementedError()
 
 
+TInputCommands = List[InputCommand]
+
+
 class CommandDispatcher(InputCommand):  # dead: disable
     """Decouple the implementation of a command from its commander."""
 
     def __init__(self, description: str = "", *args: Any) -> None:
         """Class constructor."""
         super().__init__(description=description, *args)  # type: ignore
-        self._commands = []  # type: List[InputCommand]
+        self._commands = []  # type: TInputCommands
 
     def register_handler(self, handler: InputCommand) -> None:  # dead: disable
         """Add the new handler to the list."""
