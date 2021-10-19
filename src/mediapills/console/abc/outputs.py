@@ -57,6 +57,22 @@ class BaseVerboseAwareOutput(BaseOutput, metaclass=abc.ABCMeta):
         """Verbosity of the output setter."""
         self._verbosity = verbosity
 
+    def set_quiet(self) -> None:
+        """Set level of verbosity status tp quiet."""
+        self.verbosity = self.verbosity | VERBOSITY_QUIET
+
+    def set_verbose(self) -> None:
+        """Set status of verbosity level to verbose."""
+        self.verbosity = self.verbosity | VERBOSITY_VERBOSE
+
+    def set_very_verbose(self) -> None:
+        """Set level of verbosity status to very verbose."""
+        self.verbosity = self.verbosity | VERBOSITY_VERY_VERBOSE
+
+    def set_debug(self) -> None:
+        """Set level of verbosity status to debug."""
+        self.verbosity = self.verbosity | VERBOSITY_DEBUG
+
     # @property
     # def quiet(self) -> bool:
     #     """Level of verbosity status is quiet (-q)."""

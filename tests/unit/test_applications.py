@@ -22,13 +22,12 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from mediapills.console.abc import outputs  # TODO: remove after full implementation
 from mediapills.console.applications import Application
 
 
 class TestApplication(unittest.TestCase):
     @patch("mediapills.console.applications.ConsoleInput")
-    def test_no_args_should_no_output(self, mock_in) -> None:
+    def test_no_args_should_no_output(self, mock_in: Mock) -> None:
         mock_in.return_value.validate.return_value = None
         mock_in.return_value.has_arg.return_value = False
         mock_out = Mock()
@@ -36,7 +35,7 @@ class TestApplication(unittest.TestCase):
         app = Application(stdout=mock_out, stderr=Mock())
         app.run()
 
-        self.assertEqual(0, mock_out.write.call_count)
+        self.assertEqual(mock_out.write.call_count, 0)
 
     @patch(
         "mediapills.console.applications.InputArgumentsParser.parse",
@@ -54,56 +53,60 @@ class TestApplication(unittest.TestCase):
         Mock(return_value=({}, [])),
     )
     def test_default_verbosity_should_be_normal(self) -> None:
-        app = Application(
-            stdout=Mock(verbosity=outputs.VERBOSITY_NORMAL), stderr=Mock()
-        )
+        mock_out = Mock()
+
+        app = Application(stdout=mock_out, stderr=Mock())
         app.run()
 
-        self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_QUIET)
-        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_NORMAL)
-        self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_VERBOSE)
-        self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_DEBUG)
-        self.assertFalse(app.stdout.verbosity & outputs.VERBOSITY_VERY_VERBOSE)
+        self.assertEqual(mock_out.call_count, 0)
 
     @patch(
         "mediapills.console.applications.InputArgumentsParser.parse",
         Mock(return_value=({"quiet": 1}, [])),
     )
     def test_quiet_verbosity_should_be_correct(self) -> None:
-        app = Application(stdout=Mock(verbosity=0), stderr=Mock())
+        mock_out = Mock()
+
+        app = Application(stdout=mock_out, stderr=Mock())
         app.run()
 
-        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_QUIET)
+        mock_out.set_quiet.assert_called_once()
 
     @patch(
         "mediapills.console.applications.InputArgumentsParser.parse",
         Mock(return_value=({"v": 1}, [])),
     )
     def test_verbose_verbosity_should_be_correct(self) -> None:
-        app = Application(stdout=Mock(verbosity=0), stderr=Mock())
+        mock_out = Mock()
+
+        app = Application(stdout=mock_out, stderr=Mock())
         app.run()
 
-        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_VERBOSE)
+        mock_out.set_verbose.assert_called_once()
 
     @patch(
         "mediapills.console.applications.InputArgumentsParser.parse",
         Mock(return_value=({"v": 2}, [])),
     )
     def test_very_verbose_verbosity_should_be_correct(self) -> None:
-        app = Application(stdout=Mock(verbosity=0), stderr=Mock())
+        mock_out = Mock()
+
+        app = Application(stdout=mock_out, stderr=Mock())
         app.run()
 
-        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_VERY_VERBOSE)
+        mock_out.set_very_verbose.assert_called_once()
 
     @patch(
         "mediapills.console.applications.InputArgumentsParser.parse",
         Mock(return_value=({"v": 3}, [])),
     )
     def test_debug_verbosity_should_be_correct(self) -> None:
-        app = Application(stdout=Mock(verbosity=0), stderr=Mock())
+        mock_out = Mock()
+
+        app = Application(stdout=mock_out, stderr=Mock())
         app.run()
 
-        self.assertTrue(app.stdout.verbosity & outputs.VERBOSITY_DEBUG)
+        mock_out.set_debug.assert_called_once()
 
     @patch(
         "mediapills.console.applications.InputArgumentsParser.parse",

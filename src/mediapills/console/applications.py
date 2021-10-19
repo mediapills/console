@@ -24,9 +24,8 @@ import sys
 import typing as t
 from typing import Optional
 
-from mediapills.console.abc import outputs
 from mediapills.console.abc.inputs import BaseInput
-from mediapills.console.abc.outputs import BaseOutput
+from mediapills.console.abc.outputs import BaseConsoleOutput
 from mediapills.console.arguments import InputCommand
 from mediapills.console.arguments import InputOption
 from mediapills.console.arguments import InputParameter
@@ -53,8 +52,8 @@ class BaseApplication(metaclass=abc.ABCMeta):
 
     def __init__(
         self,
-        stdout: Optional[BaseOutput] = None,
-        stderr: Optional[BaseOutput] = None,
+        stdout: Optional[BaseConsoleOutput] = None,
+        stderr: Optional[BaseConsoleOutput] = None,
         description: str = "",
         version: str = "",
         show_help: bool = False,
@@ -69,22 +68,22 @@ class BaseApplication(metaclass=abc.ABCMeta):
         self._show_version = show_version
 
     @property
-    def stdout(self) -> BaseOutput:
+    def stdout(self) -> BaseConsoleOutput:
         """Application output setter."""
         return self._stdout
 
     @stdout.setter
-    def stdout(self, stdout: BaseOutput) -> None:
+    def stdout(self, stdout: BaseConsoleOutput) -> None:
         """Application output getter."""
         self._stdout = stdout
 
     @property
-    def stderr(self) -> BaseOutput:
+    def stderr(self) -> BaseConsoleOutput:
         """Application standard errors output setter."""
         return self._stderr
 
     @stderr.setter
-    def stderr(self, stderr: BaseOutput) -> None:
+    def stderr(self, stderr: BaseConsoleOutput) -> None:
         """Application standard errors output getter."""
         self._stderr = stderr
 
@@ -179,22 +178,16 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
         super().apply_options(stdin)
 
         if stdin.has_arg("quiet"):
-            self.stdout.verbosity = self.stdout.verbosity | outputs.VERBOSITY_QUIET
+            self.stdout.set_quiet()
 
         if not stdin.has_arg("v"):
             return
-
-        verbosity = {
-            # TODO: call method set_verbose()
-            1: outputs.VERBOSITY_VERBOSE,
-            # TODO: call method set_very_verbose()
-            2: outputs.VERBOSITY_VERY_VERBOSE,
-            # TODO: call method set_debug()
-            3: outputs.VERBOSITY_DEBUG,
-            # Verbosity for greater than 3 "v" is VERBOSITY_DEBUG
-        }.get(stdin.get_arg("v"), outputs.VERBOSITY_DEBUG)
-
-        self.stdout.verbosity = self.stdout.verbosity | verbosity
+        elif stdin.get_arg("v") == 1:
+            self.stdout.set_verbose()
+        elif stdin.get_arg("v") == 2:
+            self.stdout.set_very_verbose()
+        else:
+            self.stdout.set_debug()
 
 
 class Application(VerboseAwareApplication):  # dead: disable
@@ -202,8 +195,8 @@ class Application(VerboseAwareApplication):  # dead: disable
 
     def __init__(
         self,
-        stdout: t.Optional[BaseOutput],
-        stderr: t.Optional[BaseOutput],
+        stdout: t.Optional[BaseConsoleOutput],
+        stderr: t.Optional[BaseConsoleOutput],
         description: str = "",
         version: str = "",
         show_help: bool = False,
