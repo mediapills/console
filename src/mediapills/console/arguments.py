@@ -35,8 +35,6 @@ class InputOption(BaseArgument):  # type: ignore
 
     pass
 
-    # TODO add aliases setter and getter
-
 
 class InputParameter(BaseArgument):  # type: ignore
     """Input Argument Parameter implementation."""
