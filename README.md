@@ -1,6 +1,6 @@
-[![GitHub Workflow Actions Status](https://github.com/mediapills/console/workflows/CI%20Build/badge.svg?branch=dev)](https://github.com/mediapills/console/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mediapills/console/blob/dev/LICENSE.md)
-[![Requirements Status](https://requires.io/github/mediapills/console/requirements.svg?branch=dev)](https://requires.io/github/mediapills/console/requirements/?branch=dev)
+[![GitHub Workflow Actions Status](https://github.com/mediapills/console/workflows/CI%20Build/badge.svg)](https://github.com/mediapills/console/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/mediapills/console/blob/main/LICENSE.md)
+[![Requirements Status](https://requires.io/github/mediapills/console/requirements.svg)](https://requires.io/github/mediapills/console/requirements)
 
 > CAUTION!
 >
