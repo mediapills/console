@@ -18,23 +18,19 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-from mediapills.console.abc.outputs import BaseConsoleOutput
 
-# More info: https://tldp.org/LDP/abs/html/exitcodes.html
-"""No error. The script executed successfully."""
-SUCCESS = 0
+from mediapills.console.applications import Application
+from mediapills.console.outputs import ConsoleOutput
+from typing import Dict, Any
 
-"""Catchall for general errors."""
-FAILURE = 1
+if __name__ == "__main__":
+    app = Application(stdout=ConsoleOutput(), stderr=ConsoleOutput())
 
-"""Misuse of shell builtins (according to Bash documentation)."""
-INVALID = 2  # dead: disable
+    @app.entrypoint  # type: ignore
+    def print_me(  # dead: disable
+        stdout: ConsoleOutput, **kwargs: Dict[Any, Any]  # dead: disable
+    ) -> None:
+        """CLI command print message in STDOUT."""
+        stdout.write("Application message goes here ...")
 
-
-class ConsoleOutput(BaseConsoleOutput):  # type: ignore
-    """Default class for all CLI output. It uses STDOUT and STDERR."""
-
-    def write(self, msg: str, newline: bool = False, options: int = 0) -> None:
-        """Write a message to the output."""
-        # TODO: needs to be implemented
-        raise NotImplementedError()
+    app.run()
