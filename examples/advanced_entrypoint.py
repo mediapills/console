@@ -19,7 +19,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from mediapills.console.applications import Application, option, parameter
+from mediapills.console import Application, option, parameter
 from mediapills.console.outputs import ConsoleOutput
 from mediapills.console.inputs import ConsoleInput
 
@@ -48,6 +48,6 @@ if __name__ == "__main__":
         if stdin.has_arg("b"):
             stdout.write("Argument '-b' has been used .")
 
-        stdout.write("Application message goes here ...")
+        stdout.writeln("Application message goes here ...")
 
     app.run()

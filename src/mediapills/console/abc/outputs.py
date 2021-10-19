@@ -30,6 +30,16 @@ OUTPUT_NORMAL = 2 ** 0  # dead: disable
 OUTPUT_RAW = 2 ** 1  # dead: disable
 OUTPUT_PLAIN = 2 ** 2  # dead: disable
 
+# More info: https://tldp.org/LDP/abs/html/exitcodes.html
+"""No error. The script executed successfully."""
+SUCCESS = 0
+
+"""Catchall for general errors."""
+FAILURE = 1
+
+"""Misuse of shell builtins (according to Bash documentation)."""
+INVALID = 2  # dead: disable
+
 
 class BaseOutput(metaclass=abc.ABCMeta):
     """Abstract Base Class for all Output classes."""
@@ -37,6 +47,11 @@ class BaseOutput(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def write(self, msg: str, newline: bool = False, options: int = 0) -> None:
         """Write a message to the output."""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def writeln(self, msg: str, options: int = 0) -> None:
+        """Write a message to the output and adds a newline at the end."""
         raise NotImplementedError()
 
 

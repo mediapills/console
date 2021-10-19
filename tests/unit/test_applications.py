@@ -22,11 +22,11 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from mediapills.console.applications import Application
+from mediapills.console import Application
 
 
 class TestApplication(unittest.TestCase):
-    @patch("mediapills.console.applications.ConsoleInput")
+    @patch("mediapills.console.ConsoleInput")
     def test_no_args_should_no_output(self, mock_in: Mock) -> None:
         mock_in.return_value.validate.return_value = None
         mock_in.return_value.has_arg.return_value = False
@@ -38,7 +38,7 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(mock_out.write.call_count, 0)
 
     @patch(
-        "mediapills.console.applications.InputArgumentsParser.parse",
+        "mediapills.console.InputArgumentsParser.parse",
         Mock(return_value=({}, ["--option"])),
     )
     def test_exception_should_show_help(self) -> None:
@@ -49,8 +49,7 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(e.exception.code, 1)
 
     @patch(
-        "mediapills.console.applications.InputArgumentsParser.parse",
-        Mock(return_value=({}, [])),
+        "mediapills.console.InputArgumentsParser.parse", Mock(return_value=({}, [])),
     )
     def test_default_verbosity_should_be_normal(self) -> None:
         mock_out = Mock()
@@ -61,7 +60,7 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(mock_out.call_count, 0)
 
     @patch(
-        "mediapills.console.applications.InputArgumentsParser.parse",
+        "mediapills.console.InputArgumentsParser.parse",
         Mock(return_value=({"quiet": 1}, [])),
     )
     def test_quiet_verbosity_should_be_correct(self) -> None:
@@ -73,7 +72,7 @@ class TestApplication(unittest.TestCase):
         mock_out.set_quiet.assert_called_once()
 
     @patch(
-        "mediapills.console.applications.InputArgumentsParser.parse",
+        "mediapills.console.InputArgumentsParser.parse",
         Mock(return_value=({"v": 1}, [])),
     )
     def test_verbose_verbosity_should_be_correct(self) -> None:
@@ -85,7 +84,7 @@ class TestApplication(unittest.TestCase):
         mock_out.set_verbose.assert_called_once()
 
     @patch(
-        "mediapills.console.applications.InputArgumentsParser.parse",
+        "mediapills.console.InputArgumentsParser.parse",
         Mock(return_value=({"v": 2}, [])),
     )
     def test_very_verbose_verbosity_should_be_correct(self) -> None:
@@ -97,7 +96,7 @@ class TestApplication(unittest.TestCase):
         mock_out.set_very_verbose.assert_called_once()
 
     @patch(
-        "mediapills.console.applications.InputArgumentsParser.parse",
+        "mediapills.console.InputArgumentsParser.parse",
         Mock(return_value=({"v": 3}, [])),
     )
     def test_debug_verbosity_should_be_correct(self) -> None:
@@ -109,7 +108,7 @@ class TestApplication(unittest.TestCase):
         mock_out.set_debug.assert_called_once()
 
     @patch(
-        "mediapills.console.applications.InputArgumentsParser.parse",
+        "mediapills.console.InputArgumentsParser.parse",
         Mock(return_value=({"help": 1}, [])),
     )
     def test_help_option_should_show_help(self) -> None:
@@ -122,7 +121,7 @@ class TestApplication(unittest.TestCase):
         mock_out.write.assert_called_once()
 
     @patch(
-        "mediapills.console.applications.InputArgumentsParser.parse",
+        "mediapills.console.InputArgumentsParser.parse",
         Mock(return_value=({"version": 1}, [])),
     )
     def test_version_option_should_show_version(self) -> None:

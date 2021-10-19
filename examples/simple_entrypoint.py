@@ -19,7 +19,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from mediapills.console.applications import Application
+from mediapills.console import Application
 from mediapills.console.outputs import ConsoleOutput
 from typing import Dict, Any
 

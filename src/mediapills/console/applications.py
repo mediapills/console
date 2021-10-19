@@ -21,36 +21,15 @@
 import abc
 import os
 import sys
-import typing as t
 from typing import Optional
 
 from mediapills.console.abc.inputs import BaseInput
 from mediapills.console.abc.outputs import BaseConsoleOutput
+from mediapills.console.abc.outputs import SUCCESS
 from mediapills.console.arguments import InputOption
-from mediapills.console.arguments import InputParameter
 from mediapills.console.arguments import TInputCommands
 from mediapills.console.arguments import TInputOptions
 from mediapills.console.arguments import TInputParameters
-from mediapills.console.exceptions import ConsoleUnrecognizedArgumentsException
-from mediapills.console.inputs import ConsoleInput
-from mediapills.console.outputs import FAILURE
-from mediapills.console.outputs import SUCCESS
-from mediapills.console.parsers import InputArgumentsParser
-from mediapills.console.version import version as setup_version
-
-PACKAGE_NAME = "mediapills.core"
-
-Callable = t.Callable[..., t.Any]
-
-
-def option(*args: t.Any, **kwargs: t.Any) -> InputOption:
-    """Object InputOption builder."""
-    return InputOption(*args, **kwargs)
-
-
-def parameter(*args: t.Any, **kwargs: t.Any) -> InputParameter:
-    """Object InputParameter builder."""
-    return InputParameter(*args, **kwargs)
 
 
 class BaseApplication(metaclass=abc.ABCMeta):
@@ -125,12 +104,16 @@ class BaseApplication(metaclass=abc.ABCMeta):
 
         if self._show_help:  # Add show help option
             options.append(
-                option("-h", "--help", description="show this help message and exit.")
+                InputOption(
+                    "-h", "--help", description="show this help message and exit."
+                )
             )
 
         if self._show_version:  # Add show version option
             options.append(
-                option("-V", "--version", description="show version number and quit.")
+                InputOption(
+                    "-V", "--version", description="show version number and quit."
+                )
             )
 
         return options
@@ -148,20 +131,37 @@ class BaseApplication(metaclass=abc.ABCMeta):
         """Show application version."""
         raise NotImplementedError()
 
-    @abc.abstractmethod
     def show_version(self) -> None:
         """Show application version."""
-        raise NotImplementedError()
+        sys_version = ".".join(
+            (
+                str(sys.version_info.major),
+                str(sys.version_info.minor),
+                str(sys.version_info.micro),
+            )
+        )
+
+        ver = " ".join(
+            "{app}/{ver}".format(**{"app": app, "ver": release})
+            for app, release in (
+                (sys.argv[0], self.version),
+                ("Python", sys_version),
+                (os.uname().sysname, os.uname().release),
+            )
+        )
+
+        self.stdout.write(ver)
+        exit(SUCCESS)
 
 
 class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
     """Verbose aware application.
     Verbosity levels:
-            -v: Show informational messages that highlight the progress of the
-            application at coarse-grained level.
-            -vv: Show fine-grained informational events that are most useful to debug an
-            application.
-            -vvv: Show finer-grained informational events that include tracing.
+        -v: Show informational messages that highlight the progress of the application at
+        coarse-grained level.
+        -vv: Show fine-grained informational events that are most useful to debug an
+        application.
+        -vvv: Show finer-grained informational events that include tracing.
     """
 
     @property
@@ -170,7 +170,7 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
         options = super().default_options
 
         options.append(
-            option(
+            InputOption(
                 "-q",
                 "--quiet",
                 description=(
@@ -180,7 +180,7 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
         )
 
         options.append(
-            option(
+            InputOption(
                 "-v",
                 description=(
                     "increase the verbosity of messages: "
@@ -188,6 +188,7 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
                 ),
             )
         )
+
         return options
 
     def apply_options(self, stdin: BaseInput) -> None:
@@ -207,13 +208,13 @@ class VerboseAwareApplication(BaseApplication, metaclass=abc.ABCMeta):
             self.stdout.set_debug()
 
 
-class Application(VerboseAwareApplication):
-    """Collection of commands container facade."""
+class ApplicationWithArguments(VerboseAwareApplication, metaclass=abc.ABCMeta):
+    """Abstract Base Application with arguments."""
 
     def __init__(
         self,
-        stdout: t.Optional[BaseConsoleOutput],
-        stderr: t.Optional[BaseConsoleOutput],
+        stdout: Optional[BaseConsoleOutput],
+        stderr: Optional[BaseConsoleOutput],
         description: str = "",
         version: str = "",
         show_help: bool = False,
@@ -231,8 +232,6 @@ class Application(VerboseAwareApplication):
         self._options: TInputOptions = self.default_options
         self._parameters: TInputParameters = []
         self._commands: TInputCommands = []
-        self._parser: t.Optional[InputArgumentsParser] = None
-        self._entrypoint: t.Optional[Callable] = None
 
     @property
     def options(self) -> TInputOptions:
@@ -248,108 +247,3 @@ class Application(VerboseAwareApplication):
     def commands(self) -> TInputCommands:
         """Application commands getter"""
         return self._commands
-
-    @property
-    def parser(self) -> InputArgumentsParser:
-        """Application input parser."""
-        if self._parser is None:
-            self._parser = InputArgumentsParser(
-                arguments=[*self.parameters, *self.options, *self.commands]
-            )
-        return self._parser
-
-    def run(self) -> None:
-        """Run the current application command."""
-        stdin = ConsoleInput(parser=self.parser)
-
-        try:
-            stdin.validate()
-        except ConsoleUnrecognizedArgumentsException:
-            self.show_help(FAILURE)
-
-        self.apply_options(stdin=stdin)
-
-        if len(self.commands):
-            self.do_dispatch(stdin=stdin)
-        elif self._entrypoint is not None:
-            self.do_entrypoint(stdin=stdin)
-        elif self._show_help:
-            self.show_help()
-        else:
-            pass  # Nothing to run
-
-    def do_dispatch(self, stdin: BaseInput) -> None:
-        """Dispatch commands."""
-        raise NotImplementedError()
-
-    def do_entrypoint(self, stdin: BaseInput) -> None:
-        """Run entrypoint."""
-        if callable(self._entrypoint):
-            self._entrypoint(stdin=stdin, stdout=self.stdout)
-        else:
-            raise RuntimeError("Entrypoint is not callable.")
-
-    def show_help(self, code: int = SUCCESS) -> None:
-        """Show application help"""
-        self.stdout.write(self.parser.help())
-        exit(code)
-
-    def show_version(self) -> None:
-        """Show application version."""
-        sys_version = ".".join(
-            (
-                str(sys.version_info.major),
-                str(sys.version_info.minor),
-                str(sys.version_info.micro),
-            )
-        )
-
-        ver = " ".join(
-            "{app}/{ver}".format(**{"app": app, "ver": release})
-            for app, release in (
-                (sys.argv[0], self.version),
-                ("Python", sys_version),
-                (os.uname().sysname, os.uname().release),
-                (PACKAGE_NAME, setup_version),
-            )
-        )
-
-        self.stdout.write(ver)
-        exit(SUCCESS)
-
-    def entrypoint(
-        self, *args: t.List[t.Any], **kwargs: t.Dict[t.Any, t.Any]
-    ) -> Callable:
-        """Allow you to configure a application that will run as an executable."""
-        # TODO raise error if already defined
-        def append_args(
-            options: t.Optional[TInputOptions] = None,
-            parameters: t.Optional[TInputParameters] = None,
-        ) -> None:
-            if options is not None:
-                for arg in options:
-                    self.options.append(arg)
-
-            if parameters is not None:
-                for arg in parameters:
-                    self.parameters.append(arg)
-
-        def decorator(func: Callable) -> Callable:
-            self._entrypoint = func
-            return func
-
-        if len(kwargs) > 0:
-            append_args(**kwargs)  # type: ignore
-        elif len(args) == 1:
-            ep = args[0]
-            if callable(ep):
-                return decorator(ep)
-
-        return decorator
-
-    def command(self, name: str) -> None:  # dead: disable
-        """Decorate a view function to register command in application."""
-        # TODO: implement
-        # TODO: reset stdin
-
-        raise NotImplementedError()

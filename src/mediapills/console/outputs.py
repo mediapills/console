@@ -20,21 +20,18 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from mediapills.console.abc.outputs import BaseConsoleOutput
 
-# More info: https://tldp.org/LDP/abs/html/exitcodes.html
-"""No error. The script executed successfully."""
-SUCCESS = 0
-
-"""Catchall for general errors."""
-FAILURE = 1
-
-"""Misuse of shell builtins (according to Bash documentation)."""
-INVALID = 2  # dead: disable
-
 
 class ConsoleOutput(BaseConsoleOutput):  # type: ignore
     """Default class for all CLI output. It uses STDOUT and STDERR."""
 
-    def write(self, msg: str, newline: bool = False, options: int = 0) -> None:
+    def write(
+        self, msg: str, newline: bool = False, options: int = 0  # dead: disable
+    ) -> None:
         """Write a message to the output."""
-        # TODO: needs to be implemented
-        raise NotImplementedError()
+        print(msg)
+        if newline:
+            print("\n")
+
+    def writeln(self, msg: str, options: int = 0) -> None:
+        """Write a message to the output and adds a newline at the end."""
+        self.write(msg=msg, newline=True, options=options)
