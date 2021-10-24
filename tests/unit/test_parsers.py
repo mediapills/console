@@ -44,6 +44,7 @@ class TestInputArgumentsParser(unittest.TestCase):
                     default=None,
                     options=["-m", "-mm", "-mmm"],
                     description="Argument description goes here ...",
+                    execute=None,  # disable callable execute
                 )
             ],
             description="Description goes here ...",

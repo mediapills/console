@@ -24,6 +24,7 @@ from typing import Optional
 from typing import Union
 
 from mediapills.console.abc.arguments import BaseArgument
+from mediapills.console.abc.arguments import TBaseArguments
 from mediapills.console.abc.inputs import BaseInput
 from mediapills.console.abc.outputs import BaseOutput
 
@@ -139,21 +140,20 @@ TInputParameters = List[InputParameter]
 class InputCommand(BaseArgument):  # type: ignore
     """Interface for all console commands."""
 
-    def __init__(self, description: str = "", *args: Any) -> None:
+    def __init__(
+        self,
+        *args: Any,
+        arguments: Optional[TBaseArguments] = None,
+        description: str = ""
+    ) -> None:
         """Class constructor."""
-        super().__init__(description=description, *args)
-        self._options = []  # type: TInputOptions
-        self._parameters = []  # type: TInputParameters
+        super().__init__(*args, description=description)
+        self._arguments = arguments or []
 
     @property
-    def options(self) -> List[InputOption]:
-        """Command options getter"""
-        return self._options
-
-    @property
-    def parameters(self) -> List[InputParameter]:
-        """Command parameters getter"""
-        return self._parameters
+    def arguments(self) -> TBaseArguments:
+        """Command arguments getter."""
+        return self._arguments
 
     def execute(self, stdin: BaseInput, stdout: BaseOutput) -> int:  # dead: disable
         """Execute the current command."""
@@ -163,31 +163,26 @@ class InputCommand(BaseArgument):  # type: ignore
 TInputCommands = List[InputCommand]
 
 
-class CommandDispatcher(InputCommand):  # dead: disable
-    """Decouple the implementation of a command from its commander."""
-
-    def __init__(self, description: str = "", *args: Any) -> None:
-        """Class constructor."""
-        super().__init__(description=description, *args)  # type: ignore
-        self._commands = []  # type: TInputCommands
-
-    def register_handler(self, handler: InputCommand) -> None:  # dead: disable
-        """Add the new handler to the list."""
-        pass
-
-    def remove_handler(self, name: str) -> None:  # dead: disable
-        """Remove handler from the list."""
-        pass
-
-    @property
-    def commands(self) -> List[InputCommand]:
-        """Command sub-commands getter"""
-        return self._commands
-
-    def execute(self, stdin: BaseInput, stdout: BaseOutput) -> int:  # dead: disable
-        """Execute the current command."""
-        raise NotImplementedError()
-
-    def has_command(self, name: str) -> bool:  # dead: disable
-        """Return true if an command exists by name."""
-        raise NotImplementedError()
+# class CommandDispatcher(InputCommand):
+#     """Decouple the implementation of a command from its commander."""
+#
+#     def register_handler(self, handler: InputCommand) -> None:
+#         """Add the new handler to the list."""
+#         pass
+#
+#     def remove_handler(self, name: str) -> None:
+#         """Remove handler from the list."""
+#         pass
+#
+#     @property
+#     def commands(self) -> List[InputCommand]:
+#         """Command sub-commands getter"""
+#         return self._commands
+#
+#     def execute(self, stdin: BaseInput, stdout: BaseOutput) -> int:
+#         """Execute the current command."""
+#         raise NotImplementedError()
+#
+#     def has_command(self, name: str) -> bool:
+#         """Return true if an command exists by name."""
+#         raise NotImplementedError()

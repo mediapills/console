@@ -19,43 +19,35 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import abc
-from typing import Any
-from typing import List
+import typing as t
+from argparse import ArgumentParser
+
+TParserResult = t.Tuple[t.Dict[str, str], t.List[str]]
 
 
-class BaseArgument(metaclass=abc.ABCMeta):
-    """Argument Abstraction."""
+class InputParser(metaclass=abc.ABCMeta):
+    """Abstract class for input parser."""
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Class constructor."""
-        self._options = [*args]
-        self._description = ""
-        self.__construct(**kwargs)
+    @abc.abstractmethod
+    def parse(self, argv: t.List[str]) -> TParserResult:
+        """Return parsing result."""
+        raise NotImplementedError
 
-    def __construct(self, description: str = "") -> None:
-        """Class strict constructor."""
-        self._description = description
-
-    @property
-    def options(self) -> List[str]:
-        """Options names getter."""
-        return self._options
-
-    @options.setter
-    def options(self, options: List[str]) -> None:  # pragma: no cover
-        """Options names setter."""
-        # TODO: Add argument name validator IEEE Std 1003.1-2017
-        self._options = options
-
-    @property
-    def description(self) -> str:
-        """Argument description getter."""
-        return self._description
-
-    @description.setter
-    def description(self, description: str) -> None:  # pragma: no cover
-        """Argument description setter."""
-        self._description = description
+    @abc.abstractmethod
+    def help(self) -> str:
+        """Print a help message, including the program usage and registered arguments."""
+        raise NotImplementedError
 
 
-TBaseArguments = List[BaseArgument]
+class ConsoleArgumentParser(ArgumentParser):
+    """Custom Class for parsing command line strings into Python objects."""
+
+    def exit(  # type: ignore
+        self, status: int = 0, message: t.Optional[str] = None
+    ) -> None:
+        """Exit from parsing execution."""
+        super().exit(status=status, message=message)
+
+    def error(self, message: str) -> None:  # type: ignore
+        """Print a usage message incorporating the message to stderr and exits."""
+        super().error(message=message)

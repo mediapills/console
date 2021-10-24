@@ -18,7 +18,6 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import abc
 import io
 import sys
 import typing as t
@@ -26,25 +25,11 @@ from argparse import ArgumentParser
 from argparse import SUPPRESS
 
 from mediapills.console.abc.arguments import BaseArgument
-
-ParserResult = t.Tuple[t.Dict[str, str], t.List[str]]
-
-
-class InputParser(metaclass=abc.ABCMeta):
-    """Abstract class for input parser."""
-
-    @abc.abstractmethod
-    def parse(self, argv: t.List[str]) -> ParserResult:
-        """Return parsing result."""
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def help(self) -> str:
-        """Print a help message, including the program usage and registered arguments."""
-        raise NotImplementedError
+from mediapills.console.abc.parsers import ConsoleArgumentParser
+from mediapills.console.abc.parsers import InputParser
 
 
-class InputArgumentsParser(InputParser):
+class InputArgumentsParser(InputParser):  # type: ignore
     """CLI arguments parser."""
 
     def __init__(
@@ -54,43 +39,7 @@ class InputArgumentsParser(InputParser):
         self._args = arguments
         self._desc = description
         self._epilog = epilog
-        self._parser = self.build_parser(
-            self.arguments, desc=self.description, epilog=self.epilog
-        )
-
-    @classmethod
-    def build_parser(
-        cls,
-        args: t.List[BaseArgument],
-        desc: t.Optional[str] = "",
-        epilog: t.Optional[str] = "",
-    ) -> ArgumentParser:
-        """Parser builder"""
-        parser = ArgumentParser(
-            prog=sys.argv[0], description=desc, epilog=epilog, add_help=False
-        )
-        parser = cls.extend_parser(parser=parser, args=args)
-        return parser
-
-    @staticmethod
-    def extend_parser(
-        parser: ArgumentParser, args: t.List[BaseArgument],
-    ) -> ArgumentParser:
-        """Extend parser."""
-        for arg in args:
-            is_dispatcher = callable(getattr(arg, "commands", None))
-            is_parameter = callable(getattr(arg, "default", None))
-
-            if is_dispatcher:
-                pass  # TODO: implement CommandDispatcher sub-parser
-            elif is_parameter:
-                parser.add_argument(*arg.options, nargs=1)
-            else:
-                parser.add_argument(
-                    *arg.options, action="count", default=SUPPRESS, help=arg.description
-                )
-
-        return parser
+        self._parser: t.Optional[ConsoleArgumentParser] = None
 
     @property
     def arguments(self) -> t.List[BaseArgument]:
@@ -107,15 +56,56 @@ class InputArgumentsParser(InputParser):
         """Parser epilog getter."""
         return self._epilog
 
+    @classmethod
+    def extend_parser(
+        cls,
+        parser: ArgumentParser,
+        args: t.List[BaseArgument],
+        subparsers: t.Any = None,
+    ) -> t.Tuple[ArgumentParser, t.Any]:
+        """Extend parser."""
+        for arg in args:
+            is_command = callable(getattr(arg, "execute", None))
+            is_parameter = callable(getattr(arg, "default", None))
+
+            if is_command:
+                if subparsers is None:
+                    subparsers = parser.add_subparsers(dest="command")
+
+                cls.extend_parser(
+                    subparsers.add_parser(*arg.options, help=arg.description),
+                    arg.arguments,
+                )
+            elif is_parameter:
+                parser.add_argument(*arg.options, nargs=1)
+            else:
+                parser.add_argument(
+                    *arg.options, action="count", default=SUPPRESS, help=arg.description
+                )
+
+        return parser, subparsers
+
     @property
-    def parser(self) -> ArgumentParser:
+    def parser(self) -> ConsoleArgumentParser:
         """Built-in Argument parser getter."""
+        if self._parser is None:
+            self._parser = ConsoleArgumentParser(
+                prog=sys.argv[0],
+                description=self.description,
+                epilog=self.epilog,
+                add_help=False,
+            )
+
+            self._parser, _ = self.extend_parser(
+                parser=self._parser, args=self.arguments
+            )
+
         return self._parser
 
     def parse(self, argv: t.List[str]) -> t.Tuple[t.Dict[str, str], t.List[str]]:
         """Return parsing result."""
         args, undef = self.parser.parse_known_args(argv)
-        # handle options
+
         return vars(args), undef
 
     def help(self) -> str:

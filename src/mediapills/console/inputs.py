@@ -22,8 +22,8 @@ import sys
 import typing as t
 
 from mediapills.console.abc.inputs import BaseConsoleInput
+from mediapills.console.abc.parsers import InputParser
 from mediapills.console.exceptions import ConsoleUnrecognizedArgumentsException
-from mediapills.console.parsers import InputParser
 
 
 class ConsoleInput(BaseConsoleInput):  # type: ignore
@@ -61,7 +61,7 @@ class ConsoleInput(BaseConsoleInput):  # type: ignore
         """Return all the given arguments merged with the default values."""
         args, _ = self.parser.parse(self.get_argv())
 
-        return args
+        return args  # type: ignore
 
     def get_argv(self) -> t.List[str]:
         """Get console arguments list"""
@@ -79,5 +79,6 @@ class ConsoleInput(BaseConsoleInput):  # type: ignore
     def validate(self) -> None:
         """Validate arguments."""
         args, undef = self.parser.parse(self.get_argv())
+
         if undef:
-            raise ConsoleUnrecognizedArgumentsException(undef[0])
+            raise ConsoleUnrecognizedArgumentsException(", ".join(undef))

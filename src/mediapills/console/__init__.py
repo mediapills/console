@@ -19,12 +19,14 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import typing as t
+from types import MethodType
 
 from mediapills.console.abc.inputs import BaseInput
 from mediapills.console.abc.outputs import BaseConsoleOutput
 from mediapills.console.abc.outputs import FAILURE
 from mediapills.console.abc.outputs import SUCCESS
 from mediapills.console.applications import ApplicationWithArguments
+from mediapills.console.arguments import InputCommand
 from mediapills.console.arguments import InputOption
 from mediapills.console.arguments import InputParameter
 from mediapills.console.arguments import TInputCommands
@@ -92,7 +94,8 @@ class Application(ApplicationWithArguments):
 
         try:
             stdin.validate()
-        except ConsoleUnrecognizedArgumentsException:
+        except ConsoleUnrecognizedArgumentsException as e:
+            self.stderr.write("unrecognized arguments: {msg}".format(msg=str(e)))
             self.show_help(FAILURE)
 
         self.apply_options(stdin=stdin)
@@ -106,16 +109,18 @@ class Application(ApplicationWithArguments):
         else:
             pass  # Nothing to run
 
-    def do_dispatch(self, stdin: BaseInput) -> None:
+    def do_dispatch(self, stdin: BaseInput) -> None:  # dead: disable
         """Dispatch commands."""
-        raise NotImplementedError()
+        self.show_help()
+        # raise NotImplementedError()
 
     def do_entrypoint(self, stdin: BaseInput) -> None:
         """Run entrypoint."""
         if callable(self._entrypoint):
-            self._entrypoint(stdin=stdin, stdout=self.stdout)
+            code = self._entrypoint(stdin=stdin, stdout=self.stdout)
+            exit(code)
         else:
-            raise RuntimeError("Entrypoint is not TCallable.")
+            raise RuntimeError("Entrypoint is not callable.")
 
     def show_help(self, code: int = SUCCESS) -> None:
         """Show application help"""
@@ -153,9 +158,15 @@ class Application(ApplicationWithArguments):
 
         return decorator
 
-    def command(self, name: str) -> None:  # dead: disable
+    def command(self, *args: t.Any, **kwargs: t.Any) -> TCallable:
         """Decorate a view function to register command in application."""
-        # TODO: implement
-        # TODO: reset stdin
 
-        raise NotImplementedError()
+        def decorator(func: TCallable) -> TCallable:
+            # TODO raise error if already defined
+            command = InputCommand(*args, **kwargs)
+            command.execute = MethodType(func, command)  # type: ignore
+            self.commands.append(command)
+
+            return func
+
+        return decorator

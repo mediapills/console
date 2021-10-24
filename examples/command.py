@@ -18,32 +18,40 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-from mediapills.console.abc.outputs import BaseConsoleOutput
 
+from mediapills.console import Application, option
+from mediapills.console.outputs import ConsoleOutput, ConsoleRedOutput
+from typing import Dict, Any
 
-class ConsoleOutput(BaseConsoleOutput):  # type: ignore
-    """Default class for all CLI output. It uses STDOUT and STDERR."""
+if __name__ == "__main__":
+    app = Application(stdout=ConsoleOutput(), stderr=ConsoleRedOutput())
 
-    def write(
-        self, msg: str, newline: bool = False, options: int = 0  # dead: disable
+    @app.command(
+        "cmd",
+        description="Command help ...",
+        arguments=[
+            option("-a", description="Show A."),
+            option("-b", description="Show B."),
+        ],
+    )
+    def print_me(  # dead: disable
+        stdout: ConsoleOutput, **kwargs: Dict[Any, Any]  # dead: disable
     ) -> None:
-        """Write a message to the output."""
-        print(msg)
-        if newline:
-            print("\n")
+        """CLI command print message in STDOUT."""
+        stdout.write("Command message goes here ...")
 
-    def writeln(self, msg: str, options: int = 0) -> None:
-        """Write a message to the output and adds a newline at the end."""
-        self.write(msg=msg, newline=True, options=options)
-
-
-class ConsoleRedOutput(ConsoleOutput):
-    """Default class for all CLI output. It uses STDOUT and STDERR."""
-
-    def write(
-        self, msg: str, newline: bool = False, options: int = 0  # dead: disable
+    @app.command(
+        "cmd2",
+        description="Command help ...",
+        arguments=[
+            option("-a", description="Show A."),
+            option("-b", description="Show B."),
+        ],
+    )
+    def print_me2(  # dead: disable
+        stdout: ConsoleOutput, **kwargs: Dict[Any, Any]  # dead: disable
     ) -> None:
-        """Write a message to the output."""
-        super().write(
-            msg="\033[91m" + msg + "\033[0m", newline=newline, options=options
-        )
+        """CLI command print message in STDOUT."""
+        stdout.write("Command message goes here ...")
+
+    app.run()
